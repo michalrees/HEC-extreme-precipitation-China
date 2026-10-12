@@ -1,0 +1,5 @@
+﻿metric,statistic,mean,median,n_models,unit,metric_key
+PrecipVar,CORR,0.9508,0.9507,19,1,PrecipVar
+PrecipVar,Bias,0.3702,0.3588,19,mm/day,PrecipVar
+R95 Intensity,CORR,0.9363,0.9374,19,1,R95mm_intensity
+R95 Intensity,Bias,3.3463,3.2571,19,mm/day,R95mm_intensity

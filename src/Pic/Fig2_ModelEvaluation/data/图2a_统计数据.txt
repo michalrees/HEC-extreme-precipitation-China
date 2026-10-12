@@ -1,0 +1,54 @@
+Fig. 2 statistics - scatter panels (CORR / Bias)
+script  : src/Pic/Fig2_ModelEvaluation/Fig2a.py
+model   : data/MULTI_MODEL-historical-1981-2010.nc
+obs     : data/CN05-OBS-1981-2010.nc
+period  : 1981-2010
+modes   : 19
+weight  : area-weighted, w = cos(lat); CORR / Bias share the same weights
+
+[Precip Var]  unit: mm/day
+mode                      CORR   Bias(mm/day)
+ACCESS-CM2              0.9468         0.4573
+ACCESS-ESM1-5           0.9535         0.4613
+AWI-CM-1-1-MR           0.9543         0.2969
+CESM2                   0.9501         0.2533
+CNRM-CM6-1              0.9452         0.4011
+CanESM5                 0.9425         0.6277
+EC-Earth3-Veg           0.9541         0.2192
+FGOALS-g3               0.9568         0.5851
+IITM-ESM                0.9484         0.4412
+INM-CM4-8               0.9531         0.4206
+INM-CM5-0               0.9556         0.3812
+KACE-1-0-G              0.9467         0.4740
+KIOST-ESM               0.9478         0.2422
+MPI-ESM1-2-HR           0.9522         0.2710
+MRI-ESM2-0              0.9503         0.3050
+NESM3                   0.9500         0.3588
+NorESM2-LM              0.9561         0.3474
+NorESM2-MM              0.9513         0.2372
+TaiESM1                 0.9507         0.2527
+MEAN(19 modes)          0.9508         0.3702
+
+[R95 Intensity]  unit: mm/day
+mode                      CORR   Bias(mm/day)
+ACCESS-CM2              0.9333         4.2649
+ACCESS-ESM1-5           0.9394         4.1210
+AWI-CM-1-1-MR           0.9408         2.6412
+CESM2                   0.9374         2.3259
+CNRM-CM6-1              0.9343         3.5614
+CanESM5                 0.9231         5.5761
+EC-Earth3-Veg           0.9437         2.0484
+FGOALS-g3               0.9424         5.2526
+IITM-ESM                0.9277         3.8851
+INM-CM4-8               0.9346         3.6054
+INM-CM5-0               0.9366         3.4715
+KACE-1-0-G              0.9329         4.3603
+KIOST-ESM               0.9322         2.2408
+MPI-ESM1-2-HR           0.9401         2.3752
+MRI-ESM2-0              0.9382         2.9237
+NESM3                   0.9322         3.2571
+NorESM2-LM              0.9403         3.0237
+NorESM2-MM              0.9408         2.2516
+TaiESM1                 0.9392         2.3944
+MEAN(19 modes)          0.9363         3.3463
+

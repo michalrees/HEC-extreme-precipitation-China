@@ -1,0 +1,11 @@
+﻿key,value
+n_models_full,19
+n_cases,25
+sig_rule,p < 0.05 and r >= 0.5
+reduction_bounds,"0,0.1,0.2,0.4,0.6,0.7"
+obs_uncertainty,standard_error
+history_period,1981-2010
+future_period,2021-2050
+selftest_maxdiff_ssp126,r=7.33e-07; p_value=1.43e-06; reduction=3.50e-07; posterior_mean=8.85e-06; posterior_std=3.15e-06; prior_mean=6.22e-06
+selftest_maxdiff_ssp245,r=5.91e-07; p_value=1.64e-06; reduction=3.94e-07; posterior_mean=1.02e-05; posterior_std=2.30e-06; prior_mean=5.02e-06
+selftest_maxdiff_ssp585,r=5.62e-07; p_value=9.79e-07; reduction=3.58e-07; posterior_mean=1.77e-05; posterior_std=2.62e-06; prior_mean=4.42e-06

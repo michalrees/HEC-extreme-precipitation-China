@@ -1,0 +1,11 @@
+Fig. 1(b) statistics - MME vs CN05.1 (area-weighted)
+script  : src/Pic/Fig2_ModelEvaluation/Fig2b.py
+model   : data/MULTI_MODEL-historical-1981-2010.nc
+obs     : data/CN05-OBS-1981-2010.nc
+period  : 1981-2010
+weight  : area-weighted, w = cos(lat)
+
+metric               CORR     p_value   NRMSE(%)   OBS_mean   MME_mean  underest(%)
+Precip Var         0.9535   0.000e+00    26.5022     3.7482     3.3781         9.87
+R95 Intensity      0.9428   0.000e+00    27.8038    26.3669    23.0128        12.72
+

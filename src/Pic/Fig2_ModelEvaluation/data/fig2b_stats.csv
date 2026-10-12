@@ -1,0 +1,3 @@
+﻿metric,corr,p_value,nrmse_pct,bias,unit,rmse,obs_mean,mme_mean,rel_bias_pct,n_valid,period
+Precip Var,0.95347,0.0,26.502227,0.370082,mm/day,0.993348,3.748168,3.378086,9.873675,15292,1981-2010
+R95 Intensity,0.942791,0.0,27.803844,3.354048,mm/day,7.331002,26.366863,23.012815,12.720693,15292,1981-2010
