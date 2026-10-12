@@ -1,5 +1,0 @@
-This is BibTeX, Version 0.99d (TeX Live 2025)
-The top-level auxiliary file: manuscript.aux
-The style file: apacite.bst
-Database file #1: references.bib
-apacite.bst [2013/07/21 v6.03 APA bibliography style]
