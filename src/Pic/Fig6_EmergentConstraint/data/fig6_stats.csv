@@ -1,0 +1,10 @@
+﻿panel,scenario,field,mean_area_weighted,pct_p_lt_005_and_r_ge_05
+a_correlation,SSP1-2.6,r,0.8472146486171451,98.35355285961872
+a_correlation,SSP2-4.5,r,0.8492014714335632,98.60732854666998
+a_correlation,SSP5-8.5,r,0.8488067901400296,98.53924238672938
+b_reduction,SSP1-2.6,reduction_sigma_caliber_significant_only,0.19147635496542337,
+b_reduction,SSP2-4.5,reduction_sigma_caliber_significant_only,0.19235686388749845,
+b_reduction,SSP5-8.5,reduction_sigma_caliber_significant_only,0.19794076347815756,
+c_posterior_minus_prior,SSP1-2.6,posterior_mean - prior_mean,2.4861673610750388,
+c_posterior_minus_prior,SSP2-4.5,posterior_mean - prior_mean,2.523217918142149,
+c_posterior_minus_prior,SSP5-8.5,posterior_mean - prior_mean,2.5603732876259984,

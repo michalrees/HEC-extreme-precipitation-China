@@ -1,0 +1,63 @@
+{
+  "breakpoint_km": 1408.973115441372,
+  "r2": null,
+  "slope_before": null,
+  "slope_after": null,
+  "n_bins": 41,
+  "scenario": "ssp245",
+  "selected_breakpoints": [
+    1408.973115441372,
+    4897.510856410296
+  ],
+  "multi_breakpoints": [
+    {
+      "breakpoint_km": 50.820878792638766,
+      "change_rate": 2.92201137277036,
+      "r2": null,
+      "slope_left": null,
+      "slope_right": null
+    },
+    {
+      "breakpoint_km": 76.98386967297506,
+      "change_rate": 1.123034166610068,
+      "r2": null,
+      "slope_left": null,
+      "slope_right": null
+    },
+    {
+      "breakpoint_km": 1408.973115441372,
+      "change_rate": 2.26563193141468,
+      "r2": null,
+      "slope_left": null,
+      "slope_right": null
+    },
+    {
+      "breakpoint_km": 2134.3236336868595,
+      "change_rate": 1.5627246322759905,
+      "r2": null,
+      "slope_left": null,
+      "slope_right": null
+    },
+    {
+      "breakpoint_km": 3233.0903431661895,
+      "change_rate": 3.7771792424043804,
+      "r2": null,
+      "slope_left": null,
+      "slope_right": null
+    },
+    {
+      "breakpoint_km": 4897.510856410296,
+      "change_rate": 17.286413358095835,
+      "r2": null,
+      "slope_left": null,
+      "slope_right": null
+    },
+    {
+      "breakpoint_km": 8520.246574392879,
+      "change_rate": 8.104897793958905,
+      "r2": null,
+      "slope_left": null,
+      "slope_right": null
+    }
+  ]
+}

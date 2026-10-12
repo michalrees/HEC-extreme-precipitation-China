@@ -1,0 +1,23 @@
+Fig. 2 statistics - Bias (CN05 - HiCPC MME) spatial distribution
+script  : src/Pic/Fig3_BiasSpatialMaps/Fig3.py
+input   : data/Bias_historical.nc (produced by extract_bias.py)
+period  : 1981-2010
+modes   : 19
+weight  : area-weighted, w = cos(lat)
+
+[R95 Intensity]  unit: mm/day
+  min                  : -56.1482
+  max                  : 29.2394
+  mean (unweighted)    : 3.2305
+  mean (area-weighted) : 3.3540
+  levels               : [-60.0, -48.0, -36.0, -24.0, -12.0, 0.0, 12.0, 24.0, 36.0, 48.0, 60.0]
+  colorbar ticks       : [-60.0, -36.0, 0.0, 36.0, 60.0]
+
+[PrecipVar]  unit: mm/day
+  min                  : -11.5604
+  max                  : 4.1435
+  mean (unweighted)    : 0.3522
+  mean (area-weighted) : 0.3701
+  levels               : [-12.0, -9.0, -6.0, -3.0, 0.0, 3.0, 6.0, 9.0, 12.0]
+  colorbar ticks       : [-12.0, -6.0, 0.0, 6.0, 12.0]
+
