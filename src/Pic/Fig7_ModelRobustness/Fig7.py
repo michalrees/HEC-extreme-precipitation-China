@@ -1,44 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Fig7.py —— 模式稳健性检查（Leave-one-model-out / Leave-one-family-out）单文件管线
-================================================================================
-
-本文件由原 ``00_hec_common.py``（公共库）、``01_robustness_check.py``（主计算）、
-``02_make_figures.py``（出图）、``03_selftest.py``（自检）四个脚本合并而成：
-整个模块现在只有这一个 Python 文件，路径常量、数据装载、HEC 子集解算、
-25 算例 × 3 情景的逐格点稳健性检查、龙卷风图与自检都在同一个命名空间里，
-不再有 ``sys.path.insert`` + ``importlib`` 的跨脚本 import。
-
-做什么
-------
-把正文 Fig. 6 的整条诊断链（相关 r → p 值 → HEC 后验 → 不确定性缩减 → 后验−先验偏差）
-在**逐格点**上重算 25 遍：
-
-    ALL              全 19 模式集合（参照，与 Output/EC/China 的存档结果逐位一致）
-    LOMO_<mode>      逐个剔除 1 个模式（19 折）
-    LOFO_<family>    逐个剔除 1 个模式家族（4 折：ACCESS / CESM 谱系 / INM / ECHAM6 大气）
-    LOFO_G2b         分组敏感性变体（CESM 核心三模式，去掉有争议的 TaiESM1）
-
-对每一折、每个情景（SSP1-2.6 / SSP2-4.5 / SSP5-8.5）输出逐格点的 r、p、reduction、
-prior/posterior 均值与标准差、bias，再汇总全国与 11 个分区/流域的面积加权统计量、
-与 ALL 参照场的空间型相似度（型相关 / RMSD / 显著性"变类"比例），最后画龙卷风图。
-
-用法
-----
-    python Fig7.py                     # 默认：先算稳健性（约 45 s），再出图（约 90 s）
-    python Fig7.py --selftest          # 只跑自检 T1–T6（约 15 s），不做计算、不出图
-    python Fig7.py --force-regrid      # 忽略重网格缓存，现场重算并落盘到 data/cache/
-    python Fig7.py --scenarios ssp245  # 只跑指定情景（可给多个，默认三个都跑）
-
-产出
-----
-    Fig7.jpg                           论文成品图（龙卷风图）
-    data/robustness_<scenario>.nc      逐算例、逐格点诊断场
-    data/case_region_stats.csv         逐（情景, 算例, 区域）统计量
-    data/spread_vs_baseline.csv        逐（情景, 区域, 指标）相对 ALL 的剔除敏感性
-    data/map_similarity.csv            逐（情景, 算例）空间型相似度
-    data/run_meta.csv                  运行元信息与基线自检结果
-"""
 
 from __future__ import annotations
 
@@ -93,9 +53,7 @@ SCENARIO_LABELS: Dict[str, str] = {
     "ssp585": "SSP5-8.5",
 }
 
-# 观测不确定性的口径：True -> sigma/sqrt(N)（均值标准误），False -> 产品间离散度 sigma。
-# 注意：脚本 6（pipeline/6中国区域分层涌现约束.py）已于 2026-10-09 固定为 SEM、不再有开关；
-# 本目录保留开关是为了将来试验，**必须保持 True** 才与脚本 6 的存档结果一致。
+
 USE_OBS_STANDARD_ERROR = True    # 与脚本 6 保持一致：σ_o = 产品间标准差/√N（均值标准误）
 
 MODE_ORDER: Tuple[str, ...] = (
@@ -118,8 +76,7 @@ FAMILY_VARIANTS: Dict[str, List[str]] = {
     "G2b_CESM_core": ["CESM2", "NorESM2-LM", "NorESM2-MM"],
 }
 
-# 展示名（2026-09-23 简化为家族短名）：只保留区分性最强的部分，
-# 成员构成与"哪一项是敏感性变体"由图注/图件说明交代（n 也可辅助区分）。
+
 FAMILY_LABELS: Dict[str, str] = {
     "G1_ACCESS": "ACCESS",
     "G2_CESM": "CESM",
@@ -146,13 +103,10 @@ REPO_ROOT = next(
     p for p in THIS_DIR.parents if (p / "src").is_dir() and (p / "Doc").is_dir()
 )
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 DATA_DIR = STUDY_ROOT / "data"
 FIG_DIR = STUDY_ROOT
-DOC_DIR = STUDY_ROOT / "data"     # 历史遗留常量：原 doc/ 合并进 README 后不再使用
 CACHE_DIR = DATA_DIR / "cache"
 
 MODE_FILE: Dict[str, Path] = {
@@ -171,12 +125,10 @@ OBS_FILES: Dict[str, Path] = {
     "CHM_PRE_V2": REPO_ROOT / "Output" / "Obs" / "indices" / "CHM_PRE_V2-OBS-IntensityAndPrecipVar-1961-2024.nc",
     "HGCDC": REPO_ROOT / "Output" / "Obs" / "indices" / "HGCDC-OBS-IntensityAndPrecipVar-1961-2022.nc",
 }
-# 完美模式检验目录里已有逐模式重网格缓存，可直接复用（已与本脚本的重网格结果核对一致）。
-# 该目录已于 2026-10-09 归档到仓库根的 废弃/code/ 下——归档目录在论文文件夹之外，故用 REPO_ROOT.parent。
-# 若归档被移走/删除：load_model_fields 会自动回退为现场重网格并写入本目录 data/cache，结果不受影响。
+
+
 FOREIGN_CACHE_DIR = REPO_ROOT.parent / "废弃" / "code" / "完美模式检验" / "data" / "cache"
 RIVER_DIR = DATA_ROOT / "River"
-SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 
 # ------------------------------------------------------------------
 # 2. 区域定义（与 Fig.5 / Fig.7 的区域体系一致）
@@ -248,8 +200,9 @@ def build_overlap_weights(
     w_lon = np.where(np.isfinite(w_lon), w_lon, 0.0)
 
     # 裁剪到权重非零的窗口，避免整幅 einsum
-    lat_keep = np.where(w_lat.sum(axis=1) > 0)[0]
-    lon_keep = np.where(w_lon.sum(axis=1) > 0)[0]
+    # 权重列对应源网格，裁剪源数据必须使用列索引。
+    lat_keep = np.where(w_lat.sum(axis=0) > 0)[0]
+    lon_keep = np.where(w_lon.sum(axis=0) > 0)[0]
     lat_sl = slice(int(lat_keep.min()), int(lat_keep.max()) + 1) if lat_keep.size else slice(0, 0)
     lon_sl = slice(int(lon_keep.min()), int(lon_keep.max()) + 1) if lon_keep.size else slice(0, 0)
     return w_lat[:, lat_sl], w_lon[:, lon_sl], lat_sl, lon_sl
@@ -403,8 +356,8 @@ def load_model_fields(
                        "history_period": f"{HIST_PERIOD_RANGE[0]}-{HIST_PERIOD_RANGE[1]}",
                        "future_period": f"{FUTURE_PERIOD_RANGE[0]}-{FUTURE_PERIOD_RANGE[1]}"},
             ).to_netcdf(cache_paths[m])
-            X.append(xr_out)
-            Y.append(yr_out)
+            X.append(xr_out.astype(np.float32))
+            Y.append(yr_out.astype(np.float32))
     return list(MODE_ORDER), np.stack(X), np.stack(Y)
 
 
@@ -618,6 +571,11 @@ def run_robustness_check(
         ref_fp = HEC_BASELINE_FILE[scenario]
         if ref_fp.exists():
             with xr.open_dataset(ref_fp) as ref:
+                for name in ("r", "p_value", "reduction", "posterior_mean", "posterior_std", "prior_mean"):
+                    np.testing.assert_allclose(
+                        base[name], ref[name].values, rtol=1e-5, atol=1e-6,
+                        equal_nan=True, err_msg=f"{scenario}: {name} 与 HEC 基线不一致",
+                    )
                 dev = {
                     v: float(np.nanmax(np.abs(base[k] - ref[v].values.astype(np.float64))))
                     for k, v in (("r", "r"), ("p_value", "p_value"), ("reduction", "reduction"),
@@ -687,8 +645,8 @@ def run_robustness_check(
                     "n_models": len(c["keep"]),
                     "Excluded": ",".join(c["excluded"]),
                     "Region": rname,
-                    # 统计域 = 区域掩膜 ∩ 有效格点（p<0.05 且 r>=0.5），
-                    # 与图6 面板 Mean 同口径（2026-09-22 统一）
+
+
                     "r_mean": weighted_mean(f[0], m & sig, w2d),
                     "reduction_mean": weighted_mean(f[2], m & sig, w2d),
                     "bias_mean": weighted_mean(f[3], m & sig, w2d),
@@ -803,7 +761,6 @@ def run_robustness_check(
 # ==================================================================
 # 9. 出图：龙卷风图（原 02_make_figures.py）
 # ==================================================================
-PROJ = ccrs.PlateCarree()
 
 # ---- 图 R3 所需：cm 换算（配色取自模块常量 SCENARIO_COLORS）----
 CM = 1.0 / 2.54
@@ -812,11 +769,11 @@ CM = 1.0 / 2.54
 def figure_r3():
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     sim = pd.read_csv(DATA_DIR / "map_similarity.csv")
-    # 2026-09-23：家族边界敏感性试验（G2b_CESM_core）不再绘入本图，
-    # 故图上为 19 组单模式 + 4 组模式家族 = 23 行；该算例仍保留在分析输出（CSV）中。
+
+
     sim = sim[(sim["Group"] != "Baseline") & (sim["Group"] != "Sensitivity")].copy()
-    # 纵轴顺序（2026-09-23 改）：先 19 个单模式剔除试验、后 4 个家族剔除试验（LOFO），
-    # 两组内部各自按 Δr 升序；此前按 Δr 全局排序，家族试验会散落在模式行之间（如 G1_ACCESS）。
+
+
     _ord = sim[sim["scenario"] == "ssp245"].copy()
     _ord["_fam"] = _ord["Group"].eq("LOFO").astype(int)
     order = _ord.sort_values(["_fam", "delta_china_r_mean"])["Case"].tolist()
@@ -827,18 +784,14 @@ def figure_r3():
 
     # 画布加高：顶部要放"三个子标题 + 图例"两行（原 10.6 cm 高度只够一行图例在底部）
     fig, axes = plt.subplots(1, 3, figsize=(17.0 * CM * 1.62, 11.8 * CM * 1.62), sharey=True)
-    # 版式（2026-10-09 按作者要求改）：去掉整图标题；三个子标题（带 (a)(b)(c)）移到最上一行，图例在其下方。
-    # 子标题不再用 ax.set_title，而是画成 figure 级文字（见下方 _sub_texts），这样才能放到图例之上。
-    PANEL_FS = 16.5      # 子标题字号（2026-09-23 12.5 → 14.5 → 再放大 2 号）
+
+
+    PANEL_FS = 16.5
     LEGEND_FS = 12.5     # 图例字号
     # 图例顶边与子标题底边的间距（点）：沿用原「整图标题 ↔ 图例」实测的 5.2 pt
     TITLE_GAP_PT = 5.2
-    # 每项 = (列名, 子标题, 横轴半幅, 绘图缩放系数, 横轴刻度步长)
-    # 第 2 项的不确定性缩减率按百分数呈现（2026-09-23 改）：原始数据是小数（如 0.012 = 1.2 个百分点），
-    # 乘 100 后横轴为 -2.5 ~ 2.5（%），与正文一致。
-    # 子标题措辞按宽度收敛（2026-10-09 实测）：16.5 pt 下相邻面板中心距 2.84 in，
-    # (b) 允许最大宽 3.13 in；原 "(b) Δ mean uncertainty reduction (%)" 宽 3.41 in 会与 (c) 相碰，
-    # 故去掉 "mean" → 2.86 in（保留 "uncertainty reduction" 这一关键词与单位）。
+
+
     panels = [("delta_china_r_mean", "(a) \u0394 mean correlation r", 0.025, 1.0, 0.02),
               ("delta_china_reduction_mean", "(b) \u0394 uncertainty reduction (%)", 2.5, 100.0, 1.0),
               ("rmsd_r", "(c) RMSD of the r field (%)", 6.0, 100.0, 2.0)]
@@ -861,16 +814,15 @@ def figure_r3():
         ax.set_ylim(len(order) - 0.5, -0.5)
 
     axes[0].set_yticks(range(len(order)))
-    # 纵轴标签（2026-09-23）：去掉 LOMO_/LOFO_ 前缀；家族行的 G1/G2… 代号改用 FAMILY_LABELS
-    # 里的家族短名（ACCESS / CESM / INM / ECHAM6），成员构成与"哪一项是敏感性变体"由图注交代。
+
+
     _labels = []
     for c in order:
         _name = FAMILY_LABELS.get(c.replace("LOFO_", ""), c.replace("LOMO_", ""))
         _labels.append(f"{_name}  (n={int(nmodel[c])})")
     axes[0].set_yticklabels(_labels, fontsize=12.5)   # 23 行标签：10.5 → 放大 2 号
 
-    # ---- 版式（2026-10-09 改）：顶部只预留两行——三个子标题在最上，图例（单行）在其下方 ----
-    # 单行图例比原 2×2 方框矮，故预留高度由 0.845 收到 0.895，面板相应变高。
+
     fig.tight_layout(rect=(0, 0, 1, 0.895))
 
     # 三个子标题（(a)(b)(c)）各自居中于自己的面板跨度，置于最上一行
@@ -887,9 +839,8 @@ def figure_r3():
     fig.canvas.draw()
     _sub_bottom = min(t.get_window_extent().y0 for t in _sub_texts)
     LEGEND_TOP = (_sub_bottom - TITLE_GAP_PT / 72.0 * fig.dpi) / fig.bbox.height
-    # 图例（2026-10-09 按作者要求改）：由原来的 2×2 带边框方框改为**单行、无边框**，
-    # 与图 10(c) 的图例同款（frameon=False、水平居中于三个面板的总跨度、置于子标题下方）。
-    # 原先“幽灵外框 + 两行 expand 两端对齐”的做法随之删除：单行不需要行内对齐。
+
+
     _s = list(SCENARIOS)                       # ("ssp126", "ssp245", "ssp585")
     _order = [_s[0], _s[1], _s[2]]
     _labels = [SCENARIO_LABELS[s] for s in _order] + ["leave-one-family-out"]

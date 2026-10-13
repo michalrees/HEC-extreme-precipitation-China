@@ -20,7 +20,7 @@ REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_d
 DATA_ROOT = REPO_ROOT / "Data"
 OBS_DIR = DATA_ROOT / "Obs"
 TARGET_FILE = OBS_DIR / "CN05.1_1961-2023.nc"
-OUTPUT_DIR = REPO_ROOT / "Output" / "Obs"
+OUTPUT_DIR = REPO_ROOT / "Output" / "Obs" / "Regridded"
 
 INPUT_RULES = {
     "CPC_1979-2025.nc": "bilinear",

@@ -28,10 +28,10 @@ from precip_variability_netcdf import (
 
 
 INPUT_FILES: Dict[str, Path] = {
-	"CHM_PRE_V2": REPO_ROOT / "Output" / "Obs" / "CHM_PRE_V2_daily_1960-2024_0.25-0.25.nc",
-	"CN05": REPO_ROOT / "Output" / "Obs" / "CN05.1_1961-2023_0.25-0.25.nc",
-	"CPC": REPO_ROOT / "Output" / "Obs" / "CPC_1979-2025_0.25-0.25.nc",
-	"HGCDC": REPO_ROOT / "Output" / "Obs" / "HGCDC_1961-2022_0.25-0.25.nc",
+	"CHM_PRE_V2": REPO_ROOT / "Output" / "Obs" / "Regridded" / "CHM_PRE_V2_daily_1960-2024_0.25-0.25.nc",
+	"CN05": REPO_ROOT / "Output" / "Obs" / "Regridded" / "CN05.1_1961-2023_0.25-0.25.nc",
+	"CPC": REPO_ROOT / "Output" / "Obs" / "Regridded" / "CPC_1979-2025_0.25-0.25.nc",
+	"HGCDC": REPO_ROOT / "Output" / "Obs" / "Regridded" / "HGCDC_1961-2022_0.25-0.25.nc",
 }
 
 OUTPUT_DIR = REPO_ROOT / "Output" / "Obs" / "indices"

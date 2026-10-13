@@ -53,3 +53,9 @@ _tmp*
 
 # --- 按目录整体不上传（本地保留）---
 /Doc/
+
+/Data/
+
+/Output/Obs/Regridded/
+
+/UPLOAD_EXCLUSIONS.md

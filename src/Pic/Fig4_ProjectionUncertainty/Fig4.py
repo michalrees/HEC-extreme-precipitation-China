@@ -1,30 +1,3 @@
-"""
-Fig. 4 —— R95 Intensity 多模式集合平均 (a) 与模式间标准差 σ (b)
-三情景 (SSP1-2.6 / SSP2-4.5 / SSP5-8.5) 对比
-注：(b) 行为模式间标准差 σ（mm/day），全文不确定性统一按 σ 口径呈现
-
-单文件流水线（原 fig4data.py 的数据预处理 + 原 Fig4.py 的绘图已合并到本文件）：
-
-  第 1 步 预处理（prepare_data）
-      逐个读取三情景的多模式指数文件
-      Output/Mode/indices/Scenariomerged/MULTI_MODEL-<scen>-ALL_INDICES.nc，
-      取变量 R95mm_intensity，对每个模式在 2021--2050 年上做时间平均，
-      再沿模式维求多模式集合平均、模式间方差与标准差，
-      原子写入 data/fig4_data.npz（先写同目录临时文件，再 os.replace 到最终名，
-      以免下游 Fig5_RegionalStatistics 并发读取时读到半成品）。
-
-  第 2 步 绘图（plot_figure）
-      载入 data/fig4_data.npz，渲染 2 行 × 3 列空间分布图，
-      并落盘 data/fig4_stats.csv、data/图4_统计数据.txt、data/fig4_levels.csv。
-
-用法：
-    python Fig4.py                # 完整流水线：预处理（需读入约 15 GB NetCDF）→ 绘图
-    python Fig4.py --reuse-npz    # 跳过预处理，复用已有的 data/fig4_data.npz，仅绘图
-
-产出（与合并前一致）：
-    Fig4.jpg、data/fig4_data.npz、data/fig4_stats.csv、
-    data/fig4_levels.csv、data/图4_统计数据.txt
-"""
 import argparse
 import os
 from pathlib import Path
@@ -52,13 +25,10 @@ mean_cmap = LinearSegmentedColormap.from_list("mean_custom", mean_colors, N=256)
 std_colors = ["#72ABC9", "#FFD0A2", "#F2A07D", "#DE7C55", "#E77B54", "#E65B50"]
 std_cmap = ListedColormap(std_colors, "std_custom")
 
-# ============================================================
-# 配置（合并自原 fig4data.py 与 Fig4.py，两处 REPO_ROOT 写法一致，此处统一）
-# ============================================================
-# 仓库根：向上找到同时含 src/ 与 Doc/ 的目录（不写死盘符）
+
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# 模块根与 data/ 目录（原 fig4data.py 的 output_dir 即此处的 data_dir，已合并为同一变量）
+
 output_dir = Path(__file__).parent
 data_dir = Path(__file__).parent / 'data'
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -67,9 +37,7 @@ data_dir.mkdir(parents=True, exist_ok=True)
 # 预处理输入：三情景多模式指数文件
 base_path = REPO_ROOT / "Output" / "Mode" / "indices" / "Scenariomerged"
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 shp_path = DATA_ROOT / "China" / "cnmap.shp"
 
@@ -81,9 +49,6 @@ future_period = slice(2021, 2050)
 npz_path = data_dir / 'fig4_data.npz'
 
 
-# ============================================================
-# 第 1 步：数据预处理（原 fig4data.py）
-# ============================================================
 def prepare_data() -> Path:
     """读三情景 R95mm_intensity → 集合平均/模式间方差与标准差 → 原子写入 data/fig4_data.npz。
 
@@ -165,41 +130,6 @@ def prepare_data() -> Path:
 # ============================================================
 # 统计数据落盘
 # ============================================================
-def dump_statistics(rows, out_path, lat, lon, levels_map=None) -> None:
-    """把图 4 用到的统计数据写成纯文本（data/ 目录）。
-
-    参数:
-        rows: 每个面板的面积加权均值与极值。
-        out_path: 输出 txt 路径。
-        lat, lon: 网格坐标，用于记录网格规模。
-    """
-    lines = [
-        "Fig. 4 statistics - R95mm_intensity (2021-2050), 19 CMIP6 models (HiCPC)",
-        "script  : src/Pic/Fig4_ProjectionUncertainty/Fig4.py",
-        # 该行文字保持合并前的原文（预处理当初位于 fig4data.py），以保证产物逐字节不变。
-        "input   : data/fig4_data.npz (produced by fig4data.py)",
-        "period  : 2021-2050",
-        f"grid    : {len(lat)} lat x {len(lon)} lon",
-        "weight  : area-weighted, w = cos(lat)",
-        "",
-        f"{'row':<8}{'scenario':<12}{'area-weighted mean':>20}{'min':>10}{'max':>10}",
-    ]
-    for r in rows:
-        lines.append(f"{r['row']:<8}{r['label']:<12}{r['mean_w']:>20.4f}{r['vmin']:>10.3f}{r['vmax']:>10.3f}")
-    for row_key in ["mean", "std"]:
-        vals = [r["mean_w"] for r in rows if r["row"] == row_key]
-        if len(vals) == 3:
-            lines.append("")
-            _unit = "mm/day"
-            lines.append(f"{row_key}: scenario spread (max - min) = {max(vals) - min(vals):.4f} {_unit}")
-    lines.append("")
-    if levels_map:
-        lines.append("[colorbar levels, data-driven]")
-        for _k, _lv in levels_map.items():
-            lines.append(f"{_k:<6}: {[float(v) for v in _lv]}")
-        lines.append("")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def dump_stats_csv(rows, stats_csv_path) -> None:
@@ -333,8 +263,8 @@ def plot_figure(npz_path: Path) -> None:
     LEVELS = {}
     for _key in ("mean", "std"):
         _lo, _hi = row_data_range(data, _key)
-        # 色带上下限取实际极值（2026-09-22 统一口径）：不再使用"整齐步长"向外取整，
-        # 首尾恰为数据全局最小/最大值，档数维持 6 档。
+
+
         LEVELS[_key] = np.linspace(_lo, _hi, 7)
         print(f"  色带分级[{_key}]: {LEVELS[_key].tolist()}   (数据 {_lo:.3f} ~ {_hi:.3f})")
 
@@ -502,11 +432,7 @@ def plot_figure(npz_path: Path) -> None:
         fig.text(pos.x0 - 0.02, pos.y1 + 0.02, f"({chr(ord('a') + r_idx)})",
                  fontsize=15, ha="right", va="bottom", fontweight="normal")
 
-    stats_path = output_dir / "data" / "图4_统计数据.txt"
-    dump_statistics(stats_rows, stats_path, lat, lon, LEVELS)
-    print(f'统计数据已保存至: {stats_path}')
-
-    # 统计数据同步落盘为 CSV（utf-8-sig）：主表 fig4_stats.csv + 色带分级 fig4_levels.csv
+    # 统计数据落盘为 CSV（utf-8-sig）：主表 fig4_stats.csv + 色带分级 fig4_levels.csv
     stats_csv_path = data_dir / "fig4_stats.csv"
     levels_csv_path = data_dir / "fig4_levels.csv"
     dump_stats_csv(stats_rows, stats_csv_path)

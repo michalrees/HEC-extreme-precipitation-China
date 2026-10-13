@@ -1,38 +1,3 @@
-"""
-Fig. 2 单文件流水线 —— 用 CN05.1 观测评估 HiCPC 多模式在中国区域的极端降水与降水变率。
-
-本文件由原 `Fig2a.py`（散点面板）、`Fig2b.py`（地图面板 + MME 统计量）、
-`compose_fig2.py`（成品复制）三个脚本合并而成，一次运行即可产出全部成果：
-
-    1) 数据准备（两个面板共用，先于绘图）：读取 19 个 CMIP6 模式的 historical 场与
-       CN05.1 观测（1981–2010），按面积重叠权重 × cos(lat) 把 0.1° 模式场重映射到
-       0.25° 观测网格，并取出两者的共同年份；
-    2) 散点面板 (a)：对 19 个模式逐个算 CORR / Bias，落盘统计数据，
-       再画「CORR / Bias」两行散点图，并按 dpi 400 / bbox_inches="tight"
-       直接 savefig 成**论文成品图 `Fig2.jpg`**（原 compose_fig2.py 的
-       `shutil.copyfile` 步骤已取消，也不再产生中间文件 Fig2a.jpg）；
-    3) 地图面板 (b)：CN05.1 与 HiCPC-MME（多模式等权集合平均）气候态空间分布
-       （2×2 等值线填色地图 + 中国国界 + 逐面板 PDF 直方图 + 逐行共用色带 +
-       CORR/p 标注）渲染到**模块之外**的运行期临时目录（`_make_map_tmpdir()` 用
-       `os.makedirs()` 默认权限创建，`main()` 的 `finally` 里删除，不落盘），
-       并把 MME-vs-CN05.1 的评估统计落盘 —— 正文与摘要引用的 CORR≈0.94/0.95、
-       偏差 0.37/3.35 mm/day、观测 26.37 对 MME 23.01 mm/day（约 13% 低估）
-       等数字均来自这一步的 `data/fig2b_stats.csv`。
-
-输出（模块根目录只留论文成品图与统计表，运行结束后不多出任何文件）：
-    Fig2.jpg      —— 论文成品图（散点面板）
-    data/fig2a_stats.csv、data/fig2_per_model.csv、data/图2a_统计数据.txt、
-    data/fig2b_stats.csv、data/图2b_统计数据.txt
-
-用法：
-    python Fig2.py                  # 散点面板 + 地图面板（默认，等价于原三条命令）
-    python Fig2.py --scatter-only   # 只跑散点面板：论文成品图 Fig2.jpg 及其统计表
-    python Fig2.py --map-only       # 只跑地图面板：地图渲染到临时目录，统计写入 data/
-
-环境变量：
-    FIG2_OUT 已移除 —— 它原本只用于给散点面板的成品改名（默认 Fig2a.jpg）；
-              现在论文成品图名固定为 Fig2.jpg，模块根目录不再产生其它图片文件。
-"""
 
 from __future__ import annotations
 
@@ -63,9 +28,7 @@ plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams["mathtext.fontset"] = "cm"
 plt.rcParams["axes.unicode_minus"] = False
 
-# ==================== 参数配置 ====================
-# 原 Fig2a.py / Fig2b.py 各自定义的 DATA_DIR / MODEL_FILE / OBS_FILE / FIG_DIR /
-# REPO_ROOT / SHP_PATH 逐字相同，合并后只保留一套。
+
 DATA_DIR = Path(__file__).parent / "data"
 MODEL_FILE = DATA_DIR / "MULTI_MODEL-historical-1981-2010.nc"
 OBS_FILE = DATA_DIR / "CN05-OBS-1981-2010.nc"
@@ -77,9 +40,7 @@ PANEL_KEYS = ("corr", "bias")
 PAPER_FIG_NAME = "Fig2.jpg"
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 
@@ -425,41 +386,6 @@ def draw_scatter_panels(axes, mode_names, r95_stats, var_stats, params):
 
 
 # ==================== 散点面板 (a)：统计数据落盘 ====================
-def dump_scatter_stats_txt(metric_results, mode_names, out_path, y0, y1) -> None:
-    """把图 2 用到的统计数据写成纯文本（data/ 目录），供存档与核对。
-
-    （合并前为 Fig2a.py 的 `dump_statistics()`；与 Fig2b.py 的同名函数重名，
-    故按产出面板改名为 `dump_scatter_stats_txt()`。）
-
-    参数:
-        metric_results: 各指标的 corr / bias 列表。
-        mode_names: 模式名列表。
-        out_path: 输出 txt 路径。
-        y0, y1: 评估时段起止年。
-    """
-    lines = [
-        "Fig. 2 statistics - scatter panels (CORR / Bias)",
-        # 说明：这两行 provenance 文字沿用原脚本名，以保证 data/ 下既有统计文件逐字节不变
-        # （合并后实际由 Fig2.py 统一生成；README 中已记录该历史遗留写法）。
-        "script  : src/Pic/Fig2_ModelEvaluation/Fig2a.py",
-        "model   : data/MULTI_MODEL-historical-1981-2010.nc",
-        "obs     : data/CN05-OBS-1981-2010.nc",
-        f"period  : {y0}-{y1}",
-        f"modes   : {len(mode_names)}",
-        "weight  : area-weighted, w = cos(lat); CORR / Bias share the same weights",
-        "",
-    ]
-    for metric_name, meta in TARGET_METRICS.items():
-        r = metric_results[metric_name]
-        lines.append(f"[{meta['label']}]  unit: {meta['unit']}")
-        lines.append(f"{'mode':<20}{'CORR':>10}{'Bias(mm/day)':>15}")
-        for name, c, b in zip(mode_names, r["corr"], r["bias"]):
-            lines.append(f"{name:<20}{c:>10.4f}{b:>15.4f}")
-        lines.append(f"{'MEAN(19 modes)':<20}{np.nanmean(r['corr']):>10.4f}"
-                     f"{np.nanmean(r['bias']):>15.4f}")
-        lines.append("")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 # ==================== 散点面板 (a)：统计数据 CSV 落盘 ====================
@@ -675,36 +601,6 @@ def draw_map_panels(fig: Figure, axes: np.ndarray, spatial_rows: List[Dict[str, 
 
 
 # ==================== 地图面板 (b)：统计数据落盘 ====================
-def dump_map_stats_txt(rows, out_path, y0, y1) -> None:
-    """把统计量写成纯文本（data/ 目录）。
-
-    （合并前为 Fig2b.py 的 `dump_statistics()`，因与 Fig2a.py 的同名函数重名而改名。）
-
-    参数:
-        rows: 每个指标一行，含 label / corr / p_value / nrmse / obs_mean_w / mme_mean_w。
-        out_path: 输出 txt 路径。
-        y0, y1: 评估时段起止年。
-    """
-    lines = [
-        "Fig. 1(b) statistics - MME vs CN05.1 (area-weighted)",
-        # 说明：provenance 沿用原脚本名，以保证 data/ 下既有统计文件逐字节不变
-        # （合并后实际由 Fig2.py 统一生成）。
-        "script  : src/Pic/Fig2_ModelEvaluation/Fig2b.py",
-        "model   : data/MULTI_MODEL-historical-1981-2010.nc",
-        "obs     : data/CN05-OBS-1981-2010.nc",
-        f"period  : {y0}-{y1}",
-        "weight  : area-weighted, w = cos(lat)",
-        "",
-        f"{'metric':<16}{'CORR':>9}{'p_value':>12}{'NRMSE(%)':>11}{'OBS_mean':>11}{'MME_mean':>11}{'underest(%)':>13}",
-    ]
-    for row in rows:
-        rel = (row["obs_mean_w"] - row["mme_mean_w"]) / row["obs_mean_w"] * 100.0
-        lines.append(f"{row['label']:<16}{row['corr']:>9.4f}{row['p_value']:>12.3e}"
-                     f"{row['nrmse'] * 100:>11.4f}{row['obs_mean_w']:>11.4f}"
-                     f"{row['mme_mean_w']:>11.4f}{rel:>13.2f}")
-    lines.append("")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def dump_map_stats_csv(rows, out_path, y0, y1) -> None:
@@ -897,12 +793,6 @@ def run_scatter_panel(model_sel: xr.Dataset, obs_sel: xr.Dataset, common_years: 
 
     metric_results = compute_scatter_metrics(model_sel, obs_sel)
 
-    # ---- 统计数据落盘（data/，纯文本）----
-    stats_path = Path(__file__).parent / "data" / "图2a_统计数据.txt"
-    dump_scatter_stats_txt(metric_results, mode_names, stats_path,
-                           int(common_years.min()), int(common_years.max()))
-    print(f"  统计数据(txt): {stats_path}")
-
     # ---- 统计数据落盘（data/，CSV，供核对论文数字）----
     csv_path = DATA_DIR / "fig2a_stats.csv"
     per_model_csv_path = DATA_DIR / "fig2_per_model.csv"
@@ -1001,11 +891,7 @@ def run_map_panel(model_sel: xr.Dataset, obs_sel: xr.Dataset, common_years: np.n
     # ---- 计算空间指标 + 构建 spatial_rows ----
     spatial_rows = compute_spatial_rows(model_sel, obs_sel)
 
-    # ---- 统计数据落盘（txt 与 CSV 均写入 data/）----
-    stats_path = Path(__file__).parent / "data" / "图2b_统计数据.txt"
-    dump_map_stats_txt(spatial_rows, stats_path, int(common_years.min()), int(common_years.max()))
-    print(f"  统计数据: {stats_path}")
-
+    # ---- 统计数据落盘（CSV）----
     stats_csv_path = Path(__file__).parent / "data" / "fig2b_stats.csv"
     dump_map_stats_csv(spatial_rows, stats_csv_path, int(common_years.min()), int(common_years.max()))
     print(f"  统计数据(CSV): {stats_csv_path}")

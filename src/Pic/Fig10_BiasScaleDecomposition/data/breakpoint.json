@@ -12,14 +12,14 @@
   "multi_breakpoints": [
     {
       "breakpoint_km": 50.820878792638766,
-      "change_rate": 2.92201137277036,
+      "change_rate": 2.9220113727703576,
       "r2": null,
       "slope_left": null,
       "slope_right": null
     },
     {
       "breakpoint_km": 76.98386967297506,
-      "change_rate": 1.123034166610068,
+      "change_rate": 1.1230341666100694,
       "r2": null,
       "slope_left": null,
       "slope_right": null
@@ -33,28 +33,28 @@
     },
     {
       "breakpoint_km": 2134.3236336868595,
-      "change_rate": 1.5627246322759905,
+      "change_rate": 1.5627246322759434,
       "r2": null,
       "slope_left": null,
       "slope_right": null
     },
     {
       "breakpoint_km": 3233.0903431661895,
-      "change_rate": 3.7771792424043804,
+      "change_rate": 3.777179242404383,
       "r2": null,
       "slope_left": null,
       "slope_right": null
     },
     {
       "breakpoint_km": 4897.510856410296,
-      "change_rate": 17.286413358095835,
+      "change_rate": 17.286413358095867,
       "r2": null,
       "slope_left": null,
       "slope_right": null
     },
     {
       "breakpoint_km": 8520.246574392879,
-      "change_rate": 8.104897793958905,
+      "change_rate": 8.10489779395892,
       "r2": null,
       "slope_left": null,
       "slope_right": null

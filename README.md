@@ -14,8 +14,3 @@ Using hierarchical emergent constraints to reduce the uncertainty in future extr
 
 先跑 `src/pipeline/` 生成约束场，再按各图目录的 README 出图。
 每个 `src/Pic/*/README.md` 都写明了该图的输入、产出、依赖与运行命令。
-
-## 数据
-
-超过 GitHub 单文件上限的数据见 [`DATA.md`](DATA.md)。
-

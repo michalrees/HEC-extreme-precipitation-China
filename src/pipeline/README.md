@@ -9,8 +9,8 @@
 ```text
 Data/Obs/ 下的 CPC、CHM_PRE_V2、HGCDC 日降水
     └─ 1统一观测数据分辨率.py
-         └─ Output/Obs/*_0.25-0.25.nc（三套产品）
-另行准备的 Output/Obs/CN05.1_1961-2023_0.25-0.25.nc
+         └─ Output/Obs/Regridded/*_0.25-0.25.nc（三套产品）
+另行准备的 Output/Obs/Regridded/CN05.1_1961-2023_0.25-0.25.nc
     └─ 与上述三套产品一起进入 2计算观测数据指标.py
          └─ Output/Obs/indices/<source>-OBS-IntensityAndPrecipVar-<start>-<end>.nc
 
@@ -46,15 +46,15 @@ NetCDF 后端可使用 `netCDF4`。脚本 6 虽然不绘图，仍在顶层导入
 
 输入应为已整理的逐日降水，使用一维经纬度坐标。脚本 2、3 不负责把降水通量换算成日降水量；脚本 1 仅将输出单位属性设为 `mm/day`，不做数值单位转换，须事先确认输入数值的单位。`PrecipVar` 模块按 `(time, lat, lon)` 数组处理，并通过 `pandas.to_datetime` 解析时间；非标准日历数据需要预先确认兼容性。
 
-脚本 2、3 使用 `src/lib/ETCCDI.py` 和 `src/lib/precip_variability_netcdf.py`。脚本 6 在自身代码中完成重映射和 HEC 计算，没有调用 `hec_integrate.py` 或 `hec_grid_interpolate.py`。
+脚本 2、3 使用 `src/lib/ETCCDI.py` 和 `src/lib/precip_variability_netcdf.py`。脚本 6 在自身代码中完成重映射和 HEC 计算，
 
-## 3. 各阶段的实际行为
+## 3. 计算步骤
 
 ### 3.1 统一观测网格：脚本 1
 
 目标网格取自 `Data/Obs/CN05.1_1961-2023.nc` 的经纬度坐标，保留其网格位置与间隔，并按升序输出。
 
-| 原始文件（位于 `Data/Obs/`） | 方法 | 输出文件（位于 `Output/Obs/`） |
+| 原始文件（位于 `Data/Obs/`） | 方法 | 输出文件（位于 `Output/Obs/Regridded/`） |
 |---|---|---|
 | `CPC_1979-2025.nc` | 双线性插值 | `CPC_1979-2025_0.25-0.25.nc` |
 | `CHM_PRE_V2_daily_1960-2024.nc` | 球面网格重叠面积加权 | `CHM_PRE_V2_daily_1960-2024_0.25-0.25.nc` |
@@ -62,7 +62,7 @@ NetCDF 后端可使用 `netCDF4`。脚本 6 虽然不绘图，仍在顶层导入
 
 脚本选取源文件的第一个数据变量，规范经纬度、裁剪至目标坐标范围，按年重网格，输出变量名 `pr`，采用 float32 和压缩级别 4。
 
-**CN05 衔接要求：**脚本 1 只读取 CN05 作为目标网格，不生成 `Output/Obs/CN05.1_1961-2023_0.25-0.25.nc`。脚本 2 默认要求该文件存在；从原始数据重建流程时，须另行准备符合要求的 CN05 文件，或核实原始 CN05 的变量、单位和网格后修改脚本 2 的 `INPUT_FILES["CN05"]`。代码中虽然定义了 `resolve_input_files()`，主入口没有调用它，不会自动回退到原始数据目录。
+**CN05 衔接要求：**脚本 1 只读取 CN05 作为目标网格，不生成 `Output/Obs/Regridded/CN05.1_1961-2023_0.25-0.25.nc`。脚本 2 默认要求该文件存在；从原始数据重建流程时，须另行准备符合要求的 CN05 文件，或核实原始 CN05 的变量、单位和网格后修改脚本 2 的 `INPUT_FILES["CN05"]`。代码中虽然定义了 `resolve_input_files()`，主入口没有调用它，不会自动回退到原始数据目录。
 
 ### 3.2 计算观测指标：脚本 2
 
@@ -166,43 +166,34 @@ reduction      = 1 - posterior_std / sigma_y
 
 脚本在 CN05 网格覆盖范围内计算，不执行中国边界或流域矢量裁剪，不汇总区域统计，也不按 `p_value` 阈值筛选后验场。显著性掩膜和地图呈现由下游分析决定。
 
-## 4. 运行方法
+## 4. 运行
 
-先激活包含上述依赖的 Python 环境。在项目根目录使用 PowerShell：
+在项目根目录运行，先准备符合要求的CN05输入文件：
 
-```powershell
-# 观测处理：先完成 CN05 衔接要求
+```bash
+conda activate MET
 python "src/pipeline/1统一观测数据分辨率.py"
 python "src/pipeline/2计算观测数据指标.py"
-
-# 单模式示例（与下一条批处理命令按需选择）
-python "src/pipeline/3计算模式数据强度和降水变率.py" --mode ACCESS-CM2 --scenarios ssp245
-
-# 全部 19 个模式 × 3 个情景
 python "src/pipeline/4批量计算多个模式_强度和降水变率.py"
-
-# 确认逐模式文件齐备后合并
 python "src/pipeline/5模式数据合并.py"
-
-# 清除情景环境变量，依次计算三个情景的 HEC
-Remove-Item Env:SCENARIO -ErrorAction SilentlyContinue
+# 不设置SCENARIO时，脚本6依次处理三个情景
+unset SCENARIO
 python "src/pipeline/6中国区域分层涌现约束.py"
 ```
 
-仅运行一个 HEC 情景：
+单模式运行可用脚本3替代脚本4：
 
-```powershell
-$env:SCENARIO = "ssp245"
-try {
-    python "src/pipeline/6中国区域分层涌现约束.py"
-} finally {
-    Remove-Item Env:SCENARIO -ErrorAction SilentlyContinue
-}
+```bash
+python "src/pipeline/3计算模式数据强度和降水变率.py" --mode ACCESS-CM2 --scenarios ssp245
 ```
 
-脚本 6 通过环境变量而非命令行参数选择情景。未设置时串行启动三个子进程，任意情景失败即中止；空字符串不等同于未设置，会触发不支持情景错误。脚本 6 的计算位于模块顶层，不应把它当作无副作用的库导入。
+只计算一个HEC情景：
 
-除脚本 3 的 `--mode`、`--scenarios` 和脚本 6 的 `SCENARIO` 外，路径、年份、指标和模式列表均在源码中配置。各脚本没有跳过已有输出的机制，重跑可能覆盖同名文件。脚本 2、3 会加载裁剪后的日数据，脚本 5 会加载待合并数据，运行前应预留相应内存。
+```bash
+SCENARIO=ssp245 python "src/pipeline/6中国区域分层涌现约束.py"
+```
+
+脚本6在模块顶层执行计算，不应作为库导入。路径、年份和指标在源码中配置；重跑会覆盖同名输出。脚本2、3加载裁剪后的日数据，脚本5加载待合并数据，须预留足够内存。已有观测指标与模式合并文件时可直接运行脚本6。
 
 ## 5. HEC 输出字段
 
@@ -213,10 +204,10 @@ try {
 | `r` | 模式集合历史预测因子与未来目标的相关系数 |
 | `p_value` | 对应线性回归斜率的双侧检验 p 值 |
 | `obs_sigma_raw` | 观测产品历史期均值之间的样本标准差；非正值置为 NaN |
-| `obs_sigma_effective` | 观测误差项 |
+| `obs_sigma_effective` | 观测误差项：obs_sigma_raw / √N |
 | `prior_mean` / `prior_std` | 有效模式集合未来目标的均值 / 样本标准差 |
 | `posterior_mean` / `posterior_std` | HEC 约束后的均值 / 标准差 |
 | `reduction` | 标准差相对缩减比例；0.2 表示缩减 20%，文件内未乘 100 |
 | `n` | 每个格点用于统计的有效模式对数量，不是观测产品数 `N` |
 
-全局属性记录 `scenario`、`history_indicator`、`future_indicator`、`history_period`、`future_period` 和 `observational_error_term = "sigma_raw / sqrt(N)"`。文件不输出逐模式重网格场、观测均值或观测产品数。
+输出不写入描述性全局属性。文件不输出逐模式重网格场、观测均值或观测产品数。

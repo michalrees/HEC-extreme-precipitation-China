@@ -1,20 +1,3 @@
-"""
-图 5 —— 中国七大地理分区与三大河流流域的极端降水区域统计（单文件流水线）
-
-本文件由原来的 calc_regional_stats.py（区域统计）与 Fig5.py（绘图）合并而成：
-两个脚本的代码现在共用一个命名空间，由 main() 按「先统计、后绘图」的顺序串联。
-
-  1) 统计：读取兄弟模块 Fig4 的 data/fig4_data.npz（**只读输入**），
-     对 8 个经纬度框（含 China 全域参考行）与 3 个河流流域多边形掩膜，
-     以 cos(纬度) 为权重做面积加权平均，写出 data/fig5_regional_stats.csv
-     （3 情景 × 11 区域 = 33 行）。
-  2) 绘图：读取该 CSV 与仓库根 Data/ 下的矢量，绘制
-     (a) 中国七大地理分区区划图 —— 7 个分区 + 三大河流流域；
-     (b) 各分区及流域面积加权平均极端降水强度柱状图（三情景对比），
-     写出论文成品图 Fig5.jpg。
-
-运行：python "src/Pic/Fig5_RegionalStatistics/Fig5.py"
-"""
 import time
 import zipfile
 from pathlib import Path
@@ -36,9 +19,7 @@ plt.rcParams["axes.unicode_minus"] = False
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 OUTPUT_DIR = ROOT
@@ -133,7 +114,7 @@ def build_river_mask(shp_path, lon_2d, lat_2d):
     rsf = shapefile.Reader(str(shp_path))
     polys = [shapely_shape(s.__geo_interface__) for s in rsf.shapes()]
 
-    # 获取合并外边界，加速判断
+
     merged = unary_union(polys)
 
     # 仅检查多边形边界框内的格点

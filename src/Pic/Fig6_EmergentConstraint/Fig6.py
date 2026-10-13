@@ -1,30 +1,3 @@
-"""
-Fig. 6 — 分层涌现约束（HEC）诊断：相关 (a) / 不确定性缩减 (b) / 后验-先验差值 (c)
-三情景 (SSP1-2.6 / SSP2-4.5 / SSP5-8.5) 对比
-
-单文件流水线（由原 Fig6.py + Fig6a.py + Fig6b.py + Fig6c.py 合并而成，逻辑全部集中在本文件）：
-    ① (a) 相关系数 r 的 1×3 单面板渲染             → 运行期临时目录 fig6a.jpg
-    ② (b) 不确定性缩减率（σ 口径）的 1×3 单面板渲染 → 运行期临时目录 fig6b.jpg
-    ③ (c) 后验−先验差值（mm/day）的 1×3 单面板渲染  → 运行期临时目录 fig6c.jpg
-    ④ Fig6.jpg + data/fig6_stats.csv —— 3 行 × 3 列成品组图：用同一批 nc 数据在一个 figure 内
-       **直接重绘**（不拼接 ①②③ 的 JPG），并写出面板 × 情景的面积加权统计表
-    执行顺序与原「依次运行 Fig6a.py → Fig6b.py → Fig6c.py → Fig6.py」完全一致：① → ② → ③ → ④。
-
-    ①②③ 三张单面板图是运行期中间产物：main() 在**模块目录之外**（仓库根目录上一级的
-    `_tmp_fig6_xxxxxxxx`，系统临时目录兜底）用 `os.makedirs()` 默认权限建临时目录承载，
-    当次运行结束即在 finally 中 `shutil.rmtree` 整体删除；模块根只保留 ④ 的两件成品，
-    既不落盘单面板 JPG，也不在模块目录内创建任何临时/探测目录。
-
-⚠ 成品组图与三张单面板图是同一套数据的**两套独立渲染**，统计口径刻意各自保留、不做统一
-   （灰色掩膜判据、Mean 标注覆盖的格点、色带分级规则、面积占比标注、内嵌 PDF 直方图有无等
-   均按原脚本逐条复刻），详见 README「统计口径」一节。
-
-用法：
-    python Fig6.py                     # 全部渲染（默认，等价于原先依次运行四个脚本）
-    python Fig6.py --only a            # 只渲染单面板 (a)（写临时目录，运行结束自动清理）
-    python Fig6.py --only a,b          # 渲染单面板 (a) 与 (b)
-    python Fig6.py --only composite    # 只渲染 Fig6.jpg 与 data/fig6_stats.csv
-"""
 import argparse
 import os
 import shutil
@@ -52,17 +25,13 @@ plt.rcParams["axes.unicode_minus"] = False
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 OUTPUT_DIR = ROOT
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# 数据源：脚本 6 的规范输出 Output/EC/China/（三情景 nc 平铺，future_period=2021-2050）。
-# 此前读本目录 data/ 下手工拷贝的 fig5_HEC_*.nc，那批是 2016-2050 的旧运行。
-# 2026-10-09 起脚本 6 的输出取消 <scenario>/data 嵌套层，nc 直接放在 China 根目录。
+
 HEC_DIR = REPO_ROOT / "Output" / "EC" / "China"
 
 SCENARIOS = ("ssp126", "ssp245", "ssp585")
@@ -75,8 +44,7 @@ CORR_CMAP = ListedColormap(CORR_COLORS, "corr_custom")
 
 CLASS_COLORS = ["#E7F2F6", "#FE9833", "#E95538", "#D3113D", "#770838", "#1A0033"]
 
-# 差值场 (c) 的 5 个锚点色：去掉原第 2 色 #568588（其相邻档已合并）；
-# 组图按实际分级数在锚点间再插值采样（见 render_composite），单面板脚本直接使用这 5 色。
+
 DELTA_ANCHOR_COLORS = ["#315484", "#84B0D3", "#E7F2F6", "#F58A58", "#992323"]
 
 
@@ -381,9 +349,7 @@ def render_panel_c(datasets, cn_geoms, extent, out_path) -> None:
     global_min = float(all_valid.min()) if len(all_valid) > 0 else -1.0
     global_max = float(all_valid.max()) if len(all_valid) > 0 else 1.0
 
-    # 与论文组图 Fig6.py 完全一致的分级与配色（5 色 / 6 边界 / 5 档）：
-    # 原第 2 色 #568588 已随 -3 刻度一并去掉（相邻档合并），#D64736 原本就未被
-    # BoundaryNorm 用到，故一并删除，使"档数 = 颜色数"严格一一对应。
+
     DELTA_COLORS = ["#315484", "#84B0D3", "#E7F2F6", "#F58A58", "#992323"]
 
     if global_min < -1 and global_max > 1:
@@ -703,7 +669,6 @@ def render_composite(datasets, cn_geoms, extent) -> None:
                               edgecolor='#999999', linewidth=0.5)
 
 
-
             ax_title_pos = ax.get_position()
             fig.text((ax_title_pos.x0 + ax_title_pos.x1) / 2, ax_title_pos.y1 + 0.025,
                          SCENARIO_LABELS[scenario], ha="center", va="bottom",
@@ -831,8 +796,6 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-# 临时目录一律建在模块目录**之外**（模块根必须保持恰好 4 项：Fig6.py / Fig6.jpg / data/ / README.md）。
-# 首选仓库根目录的上一级（如 4HiCPC/_tmp_fig6_xxxxxxxx），不可写时退回系统临时目录。
 _TMP_DIR_BASES = (REPO_ROOT.parent, Path(tempfile.gettempdir()))
 
 

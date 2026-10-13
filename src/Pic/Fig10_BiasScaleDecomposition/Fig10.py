@@ -1,52 +1,3 @@
-"""
-图 10（= 调整场 Bias 的谱分析与尺度分解，SSP2-4.5）——本模块单文件流水线：
-    第一部分（谱分析 → 尺度分解 → 出图）：2D DCT 谱分析 → 斜率曲率断点检测 → 三档带通重构
-    → 区域统计 → 5 面板成品图 Fig10.jpg：
-    (a) 波长-方差谱（方差保持谱），标出由斜率曲率检出、并剔除网格尺度（< 200 km）与
-        聚类冗余（Δlog₁₀λ < 0.4）后保留的两个特征尺度断点（1409 km、4898 km）；
-    (b) 三个尺度分量（小尺度 ≤1409 km 含 200 km 以下分量、中尺度 1409–4898 km、
-        大尺度 ≥4898 km）的带通重构场，共用对称发散色标（mm/day）；
-    (c) 各区域三个尺度分量的净调整量（mean_s1..3，mm/day，分组柱）：每组柱上方数字为该区域
-        三档之和（即区域平均调整量），与 (d) 中该区域六根柱的代数和一致；
-    (d) 各区域各尺度分量的正值部分与负值部分（max(Bias_b,0)、min(Bias_b,0) 的 cos φ 面积加权
-        平均，mm/day，分组柱）：每个区域 6 根柱，即三个尺度分量各一对（实色为正值部分、
-        同色斜线为负值部分）；同一尺度两根柱的代数和为该尺度在该区域的净调整量，六根柱
-        之和等于该区域的平均调整量，用于显示小尺度正负相消的来源；
-    (e) 各区域三个尺度分量占调整场空间变率的份额（var_b / Σ_b var_b，%，每区域合计 100%）。
-
-    第二部分（区域级"正/负贡献"补充统计，供区域专项分析引用；原为独立脚本
-    region_stats.py，2026 年合并进本文件，不再跨脚本 import）：不重画图，只做
-    data/scale_variance.csv 未覆盖的统计，回答：
-    · 各区域各尺度分量里，**格点层面的正、负号分布**（正格点面积占比）；
-    · 正、负格点的**平均幅度**（即 pos_part / neg_part 由"多大比例的格点、以多大振幅"构成）；
-    · **残留比** = |有符号区域平均| / 面积加权平均绝对幅值，衡量该尺度上正负相消的彻底程度
-      （残留比 4% 即 96% 相消）。
-    这一部分的三档重构场即上面刚落盘的 data/band_{1,2,3}_*.npy（内存中同一份数组，
-    np.save / np.load 往返逐比特一致），区域掩膜与 cos φ 面积加权同样直接复用上面的函数，
-    故合并后与两脚本分开运行完全等价。
-
-口径（2026-10-09 与作者逐轮确认后固定）：
-    · 分解对象是 Bias = Posterior − Prior，**不扣除全域均值**——零频项由最大尺度段承接，
-      故三档之和恰好等于该区域的平均调整量；
-    · 全国计算域只做一次 2D DCT，各子区域自其带通结果按掩膜裁剪统计（不做逐区域独立 DCT）；
-    · 区域统计一律按 cos φ 面积加权；未加权值以 unw_ 前缀同时写入 CSV 备查；
-    · (b)(c) 的统计范围为全国 + 七个分区，(c) 面板不含三个流域（流域在该尺度上的区域平均
-      接近零会放大份额噪声）；CSV 仍保留全部 11 行。
-    本脚本同时是数据生产者：逐区域统计写入 data/scale_variance.csv（全国 + 七分区 + 三流域，
-    含加权与未加权两套口径），供复现 (c) 面板与后续查证；区域级正负号长表写入
-    data/region_band_sign_stats.csv；图 11（不确定性的尺度分解）由其自身脚本独立计算，
-    只读本脚本落盘的 data/breakpoint.json。
-
-输出：data/bias_spectrum.csv、data/bias_slope.csv、data/breakpoint.json、
-      data/scale_variance.csv、data/region_band_sign_stats.csv、data/band_*.npy、Fig10.jpg
-      scale_variance.csv 除 var_s*/mean_s*/abs_s* 三套口径外，另含正负部分的 pos_s*/neg_s*
-      （面积加权平均，即 (d) 面板的柱高）与 pos_raw_s*/neg_raw_s*（原始格点求和）以及
-      pos_total/neg_total；2026-10-11 起再增 share_s1/share_s2/share_s3 三列，即 (c) 面板的
-      方差份额（%，每行三列合计 100），使正文与摘要引用的份额可直接查表。
-运行：单条命令即可复现上述全部落盘文件（原地重跑逐字节可复现）——
-      cd "<仓库根>" && python "src/Pic/Fig10_BiasScaleDecomposition/Fig10.py"
-      需与本目录的 data/ 同级；数据路径见下方 DATA_ROOT / NC_PATH。
-"""
 from __future__ import annotations
 
 import os
@@ -76,8 +27,7 @@ plt.rcParams.update({
     "ytick.labelsize": 16,
 })
 
-# ── 路径 ─────────────────────────────────────────────────
-# 仓库根：向上找到同时含 src/ 与 Doc/ 的目录，避免硬编码盘符
+
 REPO_ROOT = next(
     p for p in Path(__file__).resolve().parents
     if (p / "src").is_dir() and (p / "Doc").is_dir()
@@ -124,7 +74,7 @@ REGION_LABELS = {
 
 BAND_COLORS = ["#4C72B0", "#DD8452", "#55A868"]
 
-# 版式净距（英寸，2026-10-09 作者要求抬高 (c)、加倍 (d) 后由实测外框定位）
+
 GAP_MAP_CBAR = 0.52     # 地图下边缘 → 色带（含地图经度标签与色带标题）
 GAP_CBAR_C = 0.10       # 色带刻度标签下边缘 → (c) 面板外的图例上边缘
 GAP_C_D = 0.08          # (c) 区域名标签下边缘 → (d) 上框线
@@ -179,7 +129,7 @@ def _wavelength_map(ny: int, nx: int, lat: np.ndarray, lon: np.ndarray) -> np.nd
     wl_x[1:] = 2.0 * lx / kx[1:]
 
     inv = np.sqrt((1.0 / wl_y[:, None]) ** 2 + (1.0 / wl_x[None, :]) ** 2)
-    wl = np.where(inv > 0, 1.0 / inv, np.inf)
+    wl = np.divide(1.0, inv, out=np.full_like(inv, np.inf), where=inv > 0)
     wl[0, 0] = np.inf
     return wl
 
@@ -320,8 +270,8 @@ def _plot_spectrum(ax, spectrum: pd.DataFrame, selected_bps: list[float]) -> Non
     ax.set_yscale("log")
     ax.set_xticks([200, 500, 1000, 2000, 5000, 10000, 20000])
     ax.get_xaxis().set_major_formatter(FuncFormatter(lambda v, _: f"{v:.0f}"))
-    # 2026-10-11 按作者要求：显式给 4 个十倍程刻度，保证纵轴至少两个标注
-    #（自动定位在 6 个十倍程范围内只落到 10⁻³ 一个标签）
+
+
     ax.set_yticks([1e-6, 1e-4, 1e-2, 1e0])
     ax.set_ylabel("Variance", fontsize=16)
     ax.set_xlabel("Wavelength (km)", fontsize=16)
@@ -345,10 +295,8 @@ def _plot_band_maps(axes, lon, lat, bands, band_labels, land_mask, cn_geoms, ext
                          int(np.floor(vmax / step)) * step + step / 2, step)
 
     mesh = None
-    # 2026-10-12 按作者要求（第四轮→第五轮→第七轮）：**每张小图都保留自己的经纬度刻度**。
-    # wspace 的取值经过三轮折中：0.62 缝太宽、图太小（作者："看着太空"）；0.18 又会让
-    # 左邻图的纬度标注压到右邻图框线。现取 0.26——图宽 1.49 → 1.79 in，缝 0.92 → 0.47 in（约为第五轮的一半），
-    # 缝里同时容纳左邻图的经度跨度与右邻图的纬度标注（各约 0.25 in）仍有富余。
+
+
     for j, (ax, fld, lbl) in enumerate(zip(axes, bands, band_labels)):
         z = np.ma.masked_where(~land_mask, fld)
         mesh = ax.pcolormesh(lon, lat, z, cmap="RdBu_r", vmin=-vmax, vmax=vmax,
@@ -410,7 +358,7 @@ def _plot_sign_split(ax, df: pd.DataFrame, band_labels: list[str]) -> None:
     ax.set_xticklabels([REGION_LABELS.get(n_, n_) for n_ in names], rotation=30, ha="right")
     # (d) 面板高度仅约 0.7 in，长轴标题会越过面板上下端并与 (c) 的轴标题叠压，
     # 故只用单位作为轴标题；正的“正值部分/负值部分”含义由图注说明。
-    ax.set_ylabel("Positive /\nnegative part", fontsize=12)   # 原先只写单位，作者要求补名称
+    ax.set_ylabel("Positive /\nnegative part", fontsize=12)
     ax.set_ylim(-0.62 * span, 0.62 * span)
     ax.grid(axis="y", ls="--", alpha=0.3)
     # 不设图例：配色与 (c) 完全一致（实色=正值部分、斜线=负值部分），由图注说明；
@@ -507,7 +455,7 @@ def _finalize_layout(fig, ax_top, axes_maps, stack, cax, cb, map_extent) -> None
     cb_box = cax.get_position()
     cb_top = map_bottom - GAP_MAP_CBAR / height     # 含地图经纬度标签 + 色带标题占位
     cax.set_position([cb_box.x0, cb_top - cb_box.height, cb_box.width, cb_box.height])
-    cb.set_label("Reconstructed bias component (mm/day)", fontsize=12)
+    cb.set_label("Reconstructed adjustment component (mm/day)", fontsize=12)
     cb.ax.xaxis.set_label_position("top")
     print(f"  (b) 色带—地图间距 {(map_bottom - cb_top) * height:.2f} in")
 
@@ -548,9 +496,6 @@ def _finalize_layout(fig, ax_top, axes_maps, stack, cax, cb, map_extent) -> None
           + "、".join(heights_txt))
 
 
-# ── 区域级"正/负贡献"统计（原 region_stats.py，合并后同处一个命名空间） ──
-# 三档显示名：与 data/scale_variance.csv 同口径、同写法（≤1409 km / 1409–4898 km / ≥4898 km）；
-# 仅用于 region_band_sign_stats.csv 的 band 列，故与 Fig10 正文的档位标签分开命名。
 SIGN_BAND_LABELS = ["≤1409 km", "1409–4898 km", "≥4898 km"]
 
 
@@ -782,15 +727,13 @@ def main() -> None:
     df_plot = df[~df["region"].isin(basins)].reset_index(drop=True)
     print(f"  (c) 统计区域数 {len(df_plot)}（不含三个流域；CSV 保留全部 {len(df)} 行）")
 
-    # 画幅高度 10.8 → 11.6 in：新增 (c) 净调整量面板后改为 6 行网格（(a) 谱、(b) 三档重构场、
-    # 色带、(c) 净调整量、(d) 正负部分、(e) 方差份额）；多余空白由 bbox_inches="tight" 裁掉。
-    # 2026-10-11 行高再分配：作者要求 (a) 加高（要能容下两个以上纵轴标注），高度从 (c)(d)(e) 挪出。
+
     fig = plt.figure(figsize=(7.874, 11.6))
     gs = fig.add_gridspec(6, 1, height_ratios=[5.4, 2.3, 0.16, 3.9, 4.6, 4.4])
     ax1 = fig.add_subplot(gs[0])
     gs_maps = gs[1].subgridspec(1, 3, wspace=0.26)
-    # 2026-10-12 三张地图间距 0.18 → 0.34 → 0.62 → 0.42：每张图都要标经纬度，取"缝够用、
-    # 图尽量大"的折中（图幅固定 7.874 in，三者相互挤占）。
+
+
     axes_maps = [fig.add_subplot(gs_maps[0, j], projection=ccrs.PlateCarree()) for j in range(3)]
     cax = fig.add_subplot(gs[2])
     ax_net = fig.add_subplot(gs[3])       # (c) 净调整量

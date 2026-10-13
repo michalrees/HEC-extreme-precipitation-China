@@ -1,15 +1,3 @@
-"""
-图 1 —— 观测层：四套格点降水产品对约束因子与目标变量的气候态刻画
-
-布局：两个指标块上下排列，每块 = 2×2 排列的四套产品（只画观测本身）。
-      (a) PrecipVar（约束因子）、(b) R95 Intensity（目标变量）——每块只标一个指标编号。
-时段：1981–2010 气候态（各产品取自身可获得年份与该时段的交集）
-变更：2026-10-09 移除原第三列"Inter-observation Uncertainty (σ)"面板。产品间标准差 σ 仍在本脚本内计算，
-      并写入 data/图1_统计数据.txt 与 data/fig1_stats.csv 留档（它是 HEC 观测层估计观测误差项 σ_o 的基础）。
-
-用法：python Fig1.py
-输出：Fig1.jpg、data/图1_统计数据.txt、data/fig1_stats.csv
-"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -37,17 +25,13 @@ plt.rcParams["axes.unicode_minus"] = False
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 OBS_DIR = REPO_ROOT / "Output" / "Obs" / "indices"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 FIG_DIR = ROOT
-DOC_DIR = ROOT / "data"
 DATA_DIR = ROOT / "data"                     # CSV 统计落盘目录
 FIG_DIR.mkdir(parents=True, exist_ok=True)
-DOC_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 PROJ = ccrs.PlateCarree()
@@ -153,7 +137,6 @@ def main() -> None:
         return (l / fig_w_cm, b / fig_h_cm, w / fig_w_cm, h / fig_h_cm)
 
     mask = None
-    stats: list[str] = []
     csv_rows: list[dict] = []           # data/fig1_stats.csv 的行记录
     letters = "ab"                      # 每块只标一个指标编号
 
@@ -172,8 +155,8 @@ def main() -> None:
         spread = np.nanstd(stack, axis=0, ddof=0)      # 产品间标准差 σ（统计文件留档；不再出图）
         variance = spread ** 2                          # 产品间方差（留档）
         finite = np.concatenate([f[np.isfinite(f)] for f in fields])
-        # 色带上下限取实际极值（2026-09-22 统一口径）；档数沿用 levels_of 在原 1–99%
-        # 参考范围下给出的档数，只把首尾拉到实际极值，避免向外取整造成"空档"。
+
+
         vmin, vmax = float(np.nanmin(finite)), float(np.nanmax(finite))
         _p1, _p99 = float(np.percentile(finite, 1)), float(np.percentile(finite, 99))
         n_bands = len(levels_of(_p1, _p99, step_hint)) - 1
@@ -224,10 +207,8 @@ def main() -> None:
         std_wmean = wmean(spread, lats)
         std_max = float(np.nanmax(spread))
 
-        stats.append(f"[{vlabel}]  unit: {unit}")
         for (name, _), fld in zip(PRODUCTS, fields):
             m = wmean(fld, lats)
-            stats.append(f"  {name:12s} 面积加权均值 = {m:8.3f}")
             csv_rows.append({
                 "metric": metric,
                 "unit": unit,
@@ -236,18 +217,13 @@ def main() -> None:
                 "note": f"单套产品的气候态面积加权均值（w=cos(lat)，中国陆域，{PERIOD[0]}-{PERIOD[1]}）；"
                         f"分级 levels={levels.tolist()}",
             })
-        stats.append(f"  {'产品间方差':12s} 面积加权均值 = {var_wmean:8.3f}"
-                     f"   最大 = {var_max:.3f}   (mm/day)^2   [留档]")
-        stats.append(f"  {'产品间标准差':12s} 面积加权均值 = {std_wmean:8.3f}"
-                     f"   最大 = {std_max:.3f}   (mm/day)   [留档，不再出图]")
-        stats.append(f"  levels = {levels.tolist()}")
-        stats.append("")
 
         csv_rows.append({
             "metric": metric,
             "unit": "(mm/day)^2",
             "product": "PRODUCT_SPREAD_VARIANCE",
             "mean_area_weighted": round(var_wmean, 6),
+            "max_value": float(var_max),
             "note": f"四套产品逐格点方差（ddof=0）的面积加权均值；空间最大 = {var_max:.3f}；【留档，不再出图】",
         })
         csv_rows.append({
@@ -255,6 +231,7 @@ def main() -> None:
             "unit": "mm/day",
             "product": "PRODUCT_SPREAD_STD",
             "mean_area_weighted": round(std_wmean, 6),
+            "max_value": float(std_max),
             "note": f"产品间标准差 σ（= 方差平方根，ddof=0）的面积加权均值；空间最大 = {std_max:.3f}；"
                     f"HEC 观测层在此基础上除以 sqrt(n) 得到观测误差项 σ_o（observational error term）；本图不再绘制该场",
         })
@@ -262,20 +239,8 @@ def main() -> None:
     fig.savefig(FIG_DIR / "Fig1.jpg", dpi=400, bbox_inches="tight")
     print(f"\n图形已保存至: {FIG_DIR / 'Fig1.jpg'}")
 
-    hdr = [
-        "图 1 统计数据 —— 四套格点降水产品（观测层）",
-        "script  : src/Pic/Fig1_ObservedProducts/Fig1.py",
-        f"period  : {PERIOD[0]}-{PERIOD[1]}（各产品取自身年份与该时段交集）",
-        "weight  : 面积加权, w = cos(lat)",
-        "note    : 只画四套观测产品本身（原第三列 σ 面板已于 2026-10-09 移除）；产品间标准差 σ（ddof=0，"
-        "单位 mm/day）仍在下文统计中留档，HEC 观测层在其基础上除以 sqrt(n) 得观测误差项 σ_o",
-        "",
-    ]
-    (DOC_DIR / "图1_统计数据.txt").write_text("\n".join(hdr + stats), encoding="utf-8")
-    print(f"统计已保存至: {DOC_DIR / '图1_统计数据.txt'}")
-
     csv_path = DATA_DIR / "fig1_stats.csv"
-    pd.DataFrame(csv_rows, columns=["metric", "unit", "product", "mean_area_weighted", "note"]).to_csv(
+    pd.DataFrame(csv_rows, columns=["metric", "unit", "product", "mean_area_weighted", "max_value", "note"]).to_csv(
         csv_path, index=False, encoding="utf-8-sig")
     print(f"统计 CSV 已保存至: {csv_path}")
 

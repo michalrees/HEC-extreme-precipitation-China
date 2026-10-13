@@ -1,30 +1,3 @@
-"""
-图 8 —— 分区域约束效果热力图（单文件流水线）
-
-本模块把原先拆分的「统计」与「绘图」两个脚本合并为一个文件，由 main() 按固定顺序执行：
-
-  第 1 步 calc_regional_stats()：读取 Output/EC/China 下三个情景的 HEC 逐格点诊断场
-    （HEC_{ssp126,ssp245,ssp585}_PrecipVar_to_R95mm_intensity.nc）与 Data/River 下的三个
-    流域多边形，计算各子区域在**有效格点**（p<0.05 且 r>=0.5，与图6 一致）上的 cos φ 面积
-    加权平均：
-      1. Correlation (r)
-      2. Uncertainty Reduction
-      3. Bias (Posterior Mean − Prior Mean)
-    （原始版本为"区域内全部有限格点"口径；2026-09-22 按作者要求统一为有效格点口径。）
-    结果写出 data/fig8_regional_stats.csv（3 情景 × 11 区域 = 33 行）。
-
-  第 2 步 plot_heatmap()：读取上一步的 CSV，绘制 11×3 的三面板热力图并保存 Fig8.jpg：
-      (a) Correlation (r)
-      (b) Uncertainty Reduction
-      (c) Bias (Posterior Mean − Prior Mean)
-
-区域定义与 Fig5 的 calc_regional_stats.py 完全一致（标准七大地理分区）：
-  8 个经纬度框区域（含 China）+ 3 个河流流域多边形
-
-依赖：numpy、pandas、xarray、pyshp（import shapefile）、shapely、matplotlib。
-运行：python "src/Pic/Fig8_ConstraintHeatmap/Fig8.py"（统计先于绘图，两步由 main() 依次调用；
-      导入本模块不会触发任何计算或绘图）。
-"""
 from pathlib import Path
 
 import numpy as np
@@ -46,9 +19,7 @@ MODULE_DIR = Path(__file__).resolve().parent
 
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 HEC_DIR = REPO_ROOT / "Output" / "EC" / "China"   # 脚本 6 的规范输出（2021-2050）
 
@@ -213,7 +184,7 @@ var_configs = [
     # 刻度位置另按量级取整，配合"非整数保留 1 位小数"的标签口径。
     {"key": "r",         "label": "Correlation r",             "fmt": ".3f", "cmap": "YlOrRd", "cbar_step": 0.1},
     {"key": "reduction", "label": "Uncertainty Reduction (σ)", "fmt": ".1%", "cmap": "OrRd",   "cbar_step": 2.5},
-    {"key": "delta",     "label": "Bias",                      "fmt": ".1f", "cmap": "RdBu_r", "cbar_step": 2.0},
+    {"key": "delta",     "label": "Adjustment",                      "fmt": ".1f", "cmap": "RdBu_r", "cbar_step": 2.0},
 ]
 
 

@@ -1,36 +1,3 @@
-"""
-Fig.9 山脉分区极端降水调整场组图 —— 单文件流水线
-
-本文件把原先分散在三个脚本里的流程合并为一个模块，一次运行即复现论文图 9 的全部产物：
-
-    1. 渲染 8 个单面板 JPG：`Fig9a_China.jpg`（全国）与 `Fig9b..h_*.jpg`（七分区放大图）。
-       这 8 张面板只是**运行期中间产物**，写入 `tempfile.TemporaryDirectory()` 建立的临时目录，
-       运行结束（含异常退出）即自动清理，不落在模块根目录；
-    2. 按作者原版式把 8 个面板拼合为论文成品组图 `Fig9.jpg`——以「各面板在原图中的地图框」
-       为锚点，把新渲染的面板按宽度缩放后精确对位粘贴（先渲染、后拼合，顺序不可颠倒）；
-    3. 输出 (b)–(h) 七分区的偏差统计 `data/fig9_stats.csv`（这一项仍落盘在模块 `data/` 下）。
-
-因此模块根目录下只有 `Fig9.py`、`Fig9.jpg`、`data/`、`README.md` 四项。
-
-原三个脚本（现为本文件内的函数，共用一个命名空间，彼此不再互相 import）：
-
-    - 面板渲染           -> `render_panels()`                   （原 `Fig9.py`）
-    - 组图拼合           -> `compose_fig9()`                    （原 `compose_fig9.py`）
-    - 山脉矢量重投影     -> `reproject_mountains_to_wgs84()`    （原 `reproject_mountains_to_wgs84.py`）
-
-用法：
-    python Fig9.py                        # 默认：渲染 8 个面板 + CSV，再拼合 Fig9.jpg
-    python Fig9.py --reproject-mountains  # 一次性预处理：山脉矢量 Albers -> WGS84（默认不执行）
-
-关于 `--reproject-mountains`：该步骤原为一次性预处理脚本 `reproject_mountains_to_wgs84.py`，
-用于生成 `data/CN_MountainRanges_WGS84.*`。其源数据
-`Data/山脉走势数据/中国主要山脉【山脉数据】/CN_MountainRanges/CN_MountainRanges.shp`
-在当前仓库中**已不存在**，该步骤无法重跑，因此默认不执行；主流程只消费 `data/` 下已重投影好的
-派生文件，绘图不依赖源 shapefile。仅当重新拿到源 shapefile 时才需要加此标志重跑。
-
-依赖：cartopy、matplotlib、numpy、xarray、pandas、pyproj、shapely、pyshp（`import shapefile`）、
-Pillow（`PIL`）、scipy。
-"""
 from __future__ import annotations
 
 import argparse
@@ -61,9 +28,7 @@ plt.rcParams["font.family"] = ["Times New Roman", "DejaVu Sans"]   # 圈号 ①�
 plt.rcParams["mathtext.fontset"] = "cm"
 plt.rcParams["axes.unicode_minus"] = False
 
-# ---- 路径 ----------------
-# 合并说明：原三个脚本各自定义的 ROOT / HERE / FIG_DIR / OUTPUT_DIR 取值完全相同（都指向本模块目录），
-# 现统一为 ROOT 一份；REPO_ROOT 的向上搜索逻辑三个脚本也一致，保留一份。
+
 ROOT = Path(__file__).resolve().parent          # src/Pic/Fig9_MountainAdjustment（脚本与图件同级）
 DATA_DIR = ROOT / "data"                        # 山脉矢量与统计 CSV 的落盘目录
                                                 # （8 张单面板 JPG 不再落盘：render_panels() 写入运行期临时目录）
@@ -71,9 +36,7 @@ OUT_JPG = ROOT / "Fig9.jpg"                     # 论文成品组图（原 compo
                                                 # REPO_ROOT/"src"/"Pic"/"Fig9_MountainAdjustment"/"Fig9.jpg"，与 ROOT 等价）
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 MTN_PATH = DATA_DIR / "CN_MountainRanges_WGS84.shp"
@@ -89,9 +52,6 @@ DPI = 400
 PROJ = ccrs.PlateCarree()
 SCENARIOS = ("ssp126", "ssp245", "ssp585")
 
-DELTA_COLORS = ["#315484", "#568588", "#84B0D3", "#82D1DF", "#CCD7BC",
-                 "#E7F2F6",
-                 "#FEF2B6", "#FDC780", "#F58A58", "#D64736", "#992323"]
 
 # 分区标号：直接采用对应子图的字母 (b)-(h)，(a) 图上的标注与左侧图例都用它
 PANEL_LETTERS = "bcdefgh"
@@ -119,7 +79,7 @@ GRATICULES = {
 
 # ---- 组图版式（原 compose_fig9.py）----
 # 画布固定尺寸；面板锚点一律不动。
-CANVAS = (2660, 1916)                    # 2026-10-11：由 2525 加宽到 2660
+CANVAS = (2660, 1916)
 # 原因：面板标题由「山名」改为「地区 + 山名」（如 (b) North China Taihang Mountains）后，
 # 右侧 (b)(c) 的单行标题右缘实测到 2642 px，原 2525 px 画布会把末几字裁掉。
 # 面板锚点一律不动——左移面板会压住 (a) 面板右下角的 "Bias>0" 标框（已实测），故只加宽画布。
@@ -389,8 +349,7 @@ def render_panels(panel_dir: Path) -> None:
     global_min = float(all_valid.min()) if len(all_valid) > 0 else -1.0
     global_max = float(all_valid.max()) if len(all_valid) > 0 else 1.0
 
-    # 与图6(c) 完全一致的分级/配色（2026-09-22 统一）：
-    # 首尾取实际极值 ±max(|min|,|max|)，近 0 密、两端疏；颜色由 5 个锚点插值采样。
+
     DELTA_ANCHORS = ["#315484", "#84B0D3", "#E7F2F6", "#F58A58", "#992323"]
 
     if global_min < -1 and global_max > 1:
@@ -440,7 +399,7 @@ def render_panels(panel_dir: Path) -> None:
     fig_a.subplots_adjust(bottom=0.14)
     ax_a = fig_a.add_subplot(1, 1, 1, projection=PROJ)
     _draw_map(ax_a, china_extent, delta, mask, Lon, Lat_grid, bounds, colors,
-              cn_geoms, "SSP2-4.5  Bias = Posterior − Prior",
+              cn_geoms, "SSP2-4.5  Adjustment = Posterior − Prior",
               xlocs=[70, 90, 110, 130], ylocs=[20, 30, 40, 50],
               add_rect=rects, cmap=cmap, norm=norm)
     # 每个分区框中心标注圈号（与图例中的「① 山名」对应）
@@ -451,21 +410,18 @@ def render_panels(panel_dir: Path) -> None:
                   bbox=dict(boxstyle="round,pad=0.10", facecolor="white",
                             edgecolor="none", alpha=0.75))
 
-    # 右下角信息：仅正偏差格点占比（按格点计数，非面积加权）；p 值一行已按作者要求去掉
+
     _v = np.isfinite(delta)
     _pos = (delta > 0) & _v
     _pos_pct = float(_pos.sum() / _v.sum() * 100) if _v.sum() > 0 else 0.0
     ax_a.text(0.97, 0.12,
-              f"Bias>0: {_pos_pct:.1f}%",
+              f"Adjustment>0: {_pos_pct:.1f}%",
               transform=ax_a.transAxes, fontsize=7, ha="right", va="bottom",
               bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray", alpha=0.8))
     fig_a.text(0.01, 0.99, "(a)", transform=fig_a.transFigure, fontsize=10,
                va="top", ha="left", bbox=dict(boxstyle="round,pad=0.15", facecolor="white", edgecolor="none", alpha=0.7))
 
-    # 图例（左下角）
-    # 图例只保留圈号与山名（按作者要求去掉色块），用不可见句柄 + handlelength=0 收起色块位
-    # 2026-10-11：标签由「山名」改为「地区 + 山名」后图例变宽，压住了地图上 (e) 西南分区框，
-    # 按作者要求把字号 6 → 5 磅（其余留白参数不变）。
+
     legend_handles = [Line2D([], [], linestyle="none",
                              label=f"({PANEL_LETTERS[i]}) {reg['label']} {reg['en']}")
                        for i, reg in enumerate(REGIONS)]
@@ -486,16 +442,13 @@ def render_panels(panel_dir: Path) -> None:
                         extend='both', extendfrac=0.04, ticks=show_ticks)
     cb.ax.xaxis.set_major_formatter(FuncFormatter(_fmt_tick))
     cb.ax.tick_params(labelsize=7)
-    cb.set_label("Bias (mm/day)", fontsize=8)
+    cb.set_label("Adjustment (mm/day)", fontsize=8)
 
     fig_a.savefig(panel_dir / "Fig9a_China.jpg", dpi=DPI, bbox_inches="tight")   # 临时面板，供组图使用
     plt.close(fig_a)
     print(f"[DONE] Fig9a_China.jpg")
 
-    # ================================================================
-    # Fig9b~h: 七大分区放大图
-    # ================================================================
-    # ---- 统计数据累加器（本次新增：落盘为 CSV）----
+
     fig9_stats = []
     letters = "bcdefgh"
     for reg, letter in zip(REGIONS, letters):
@@ -522,8 +475,6 @@ def render_panels(panel_dir: Path) -> None:
         print(f"[DONE] Fig9{letter}_{mtn_name}.jpg")
 
 
-
-        # ---- 该山区分区的偏差统计（本次新增）----
         _ext = reg["extent"]
         _rm = ((Lon >= _ext[0]) & (Lon <= _ext[1]) & (Lat_grid >= _ext[2]) & (Lat_grid <= _ext[3]))
         _dv = delta[_rm & np.isfinite(delta)]
@@ -537,8 +488,6 @@ def render_panels(panel_dir: Path) -> None:
                            "pct_bias_positive": _pct_pos})
 
 
-
-    # ---- 统计数据落盘为 CSV（本次新增）----
     _sp = DATA_DIR / "fig9_stats.csv"
     _sp.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(fig9_stats).to_csv(_sp, index=False, encoding="utf-8-sig")

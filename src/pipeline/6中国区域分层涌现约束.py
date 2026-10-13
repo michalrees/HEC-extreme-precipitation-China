@@ -428,13 +428,7 @@ out = xr.Dataset(
     },
     coords={"lat": obs_mean["lat"].values, "lon": obs_mean["lon"].values},
 )
-out.attrs["scenario"] = SCENARIO
-out.attrs["history_indicator"] = HIST_INDICATOR
-out.attrs["future_indicator"] = FUTURE_INDICATOR
-out.attrs["history_period"] = f"{HIST_PERIOD_RANGE[0]}-{HIST_PERIOD_RANGE[1]}"
-out.attrs["future_period"] = f"{FUTURE_PERIOD_RANGE[0]}-{FUTURE_PERIOD_RANGE[1]}"
-# 观测误差项 observational error term：HEC 与传统涌现约束的差别就在于保留它（论文 §2.3 观测层）
-out.attrs["observational_error_term"] = "sigma_raw / sqrt(N)"
+# 输出仅保留数据变量和坐标，不写入全局描述属性。
 
 output_file = DATA_ROOT / f"HEC_{SCENARIO}_{HIST_INDICATOR}_to_{FUTURE_INDICATOR}.nc"
 out.to_netcdf(output_file)

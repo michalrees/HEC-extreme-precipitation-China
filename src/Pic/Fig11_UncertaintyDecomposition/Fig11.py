@@ -1,44 +1,3 @@
-"""Fig.11 单文件流水线：先验 → 后验不确定性缩减率的尺度分解（单面板）+ 尺度谱对照。
-
-本文件由原 `Fig11.py` / `尺度谱.py` / `_calc_cancellation.py` / `_calc_cross_check.py` /
-`_trace_13_38_49.py` 五个脚本合并而成：全模块只有一个命名空间，不再有跨脚本 import
-（原两个核算脚本的 `from Fig11 import compute_wavelength_map, dct_filter_bands` 已消失，
-相关函数在本文件上方定义、供诊断函数直接调用）。
-
-默认运行（一条命令复现全部产物）：
-    python Fig11.py
-流水线顺序（与原两脚本的先后一致）：
-    ① run_fig11()     读 nc 的 σ 场 → 断点 → 全国一次 2D DCT 三档分解 → 掩膜 → 逐区域统计
-                      → data/uncertainty_reduction.csv + Fig11.jpg
-    ② run_spectrum()  同一条 nc 的三个场（先验 σ、后验 σ、方差缩减量）各算一条 2D DCT
-                      波长-方差谱，并标注断点 → data/uncertainty_spectrum.csv；备用谱图
-                      fig11a.jpg 只写到**模块之外**的运行期临时目录（见 `_spectrum_scratch()`，
-                      退出 with 块即整目录删除），模块根因此恒为
-                      Fig11.py / Fig11.jpg / data/ / README.md 四项
-
-诊断开关（**默认一律不跑**；给出任一开关时只跑诊断、不重跑流水线）：
-    python Fig11.py --cancellation   # 有符号区域平均 vs 区域平均绝对值（相消率），只打印，无产物
-    python Fig11.py --cross-check    # 三种总缩减率口径交叉校验（20.7% / 20.6% / 19.2%），只打印
-    python Fig11.py --trace          # 从 git HEAD 旧产物溯源已废弃的 13/38/49
-                                     # 依赖 `git show HEAD:src/Pic/.../uncertainty_decomposition.csv`，
-                                     # 该路径在当前 git HEAD 中已不存在，故此开关预期会失败并给出提示
-
-口径（2026-10-12 定稿，作者指示只保留"三档缩减率"）：
-    · 分解对象是**不确定性幅值场 σ 本身**（prior_std / posterior_std，nc 中即模式间标准差 σ），
-      不是调整场；与 3.2 节（图 10，分解 Bias 场）互补。
-    · 断点沿用图 10 由 Bias 谱检出的 1409 / 4898 km；三档 = 小（≤1409）、中（1409–4898）、
-      大（≥4898，承接零频项）。全国只做一次 2D DCT，子区域自其带通结果按掩膜裁剪统计。
-    · 统计量取**带通重构分量的区域平均绝对值** ⟨|σ_b|⟩（cos φ 面积加权）：恒为非负、三档之和
-      与该区域全场平均 σ 严格一致（重建误差 ~1e-14），故不存在"有符号区域平均为负"的解释困难。
-    · 不再输出各尺度对总缩减量的贡献份额——份额差异只是各档先验量级不同所致，
-      "贡献大"不等于"压缩得多"，单列易被误读（见本目录 README.md「方法说明」第五节）。
-    · 全国行用 cnmap 陆地掩膜；七个分区 = 经纬框 ∩ 陆地掩膜。三流域仅入 CSV、不出图。
-
-输出：data/uncertainty_reduction.csv（全国 + 七分区 + 三流域：各档先验/后验幅值、缩减量、缩减率、总缩减率）
-      Fig11.jpg
-      data/uncertainty_spectrum.csv（谱对照步骤；其备用谱图 fig11a.jpg 只写模块外的运行期临时目录、不落盘）
-运行：python Fig11.py（路径由 `Path(__file__).resolve()` 自下向上定位，无需修改）
-"""
 from __future__ import annotations
 
 import argparse
@@ -147,7 +106,7 @@ def compute_wavelength_map(ny: int, nx: int, lat: np.ndarray, lon: np.ndarray) -
     wl_x[1:] = 2.0 * lx / kx[1:]
     inv = np.sqrt((1.0 / wl_y[:, None]) ** 2 + (1.0 / wl_x[None, :]) ** 2)
     with np.errstate(divide="ignore"):
-        wl = np.where(inv > 0, 1.0 / inv, np.inf)
+        wl = np.divide(1.0, inv, out=np.full_like(inv, np.inf), where=inv > 0)
     wl[0, 0] = np.inf
     return wl
 
@@ -221,8 +180,7 @@ def _plot_rate(ax, df: pd.DataFrame, band_labels: list[str], ref: float) -> None
             ax.text(xi, vi + 0.035 * vmax, f"{vi:.1f}", ha="center", va="bottom",
                     fontsize=10, fontweight="bold", color=BAND_COLORS[i])
 
-    # 2026-10-12 按作者要求去掉面板内的全国水平参考线及其注记（"China mean 20.7%"）：
-    # 全国总缩减率只在图注中说明，面板内不再画线。
+
     ax.set_ylim(0, vmax)
     ax.set_xticks(x)
     ax.set_xticklabels([REGION_LABELS.get(k, k) for k in names], rotation=30, ha="right")
@@ -357,7 +315,7 @@ def compute_spectrum(field: np.ndarray, lat: np.ndarray,
     wl_x[1:] = 2.0 * lx / kx[1:]
 
     inv = np.sqrt((1.0 / wl_y[:, None]) ** 2 + (1.0 / wl_x[None, :]) ** 2)
-    wavelength = np.where(inv > 0, 1.0 / inv, np.inf)
+    wavelength = np.divide(1.0, inv, out=np.full_like(inv, np.inf), where=inv > 0)
 
     pw = power.ravel()
     wl = wavelength.ravel()
@@ -420,7 +378,7 @@ def run_spectrum(out_path: Path) -> None:
     spec_posterior = compute_spectrum(posterior_std, lat, lon)
     spec_reduction = compute_spectrum(var_reduction, lat, lon)
 
-    # 合并保存
+
     merged = spec_prior.rename(
         columns={"variance": "prior_var"}
     ).merge(
@@ -438,7 +396,7 @@ def run_spectrum(out_path: Path) -> None:
     with open(BP_PATH) as f:
         bp_info = json.load(f)
     selected_bps = sorted(bp_info.get("selected_breakpoints", []))
-    all_bps_data = bp_info.get("multi_breakpoints", [])  # noqa: F841（备用，原脚本保留）
+    all_bps_data = bp_info.get("multi_breakpoints", [])
 
     print(f"Breakpoints: {selected_bps}")
 
@@ -512,7 +470,7 @@ def run_cancellation() -> None:
     lon = np.asarray(ds.lon.values, float)
     sp = np.asarray(ds["prior_std"].values, float)
 
-    # 原脚本在此处内联重算 cnmap 掩膜，与 make_china_mask() 逐步等价，故直接复用
+
     LON, LAT = np.meshgrid(lon, lat)
     mask_cn = make_china_mask(lat, lon) & np.isfinite(sp)
     mask_cc = (LON >= 108) & (LON <= 115) & (LAT >= 26) & (LAT <= 34) & np.isfinite(sp)
@@ -572,9 +530,7 @@ def run_cross_check() -> None:
               f"1−后验/先验={100*(1-q/p):.1f}%")
         print(f"  ③ 逐格点缩减率区域平均 = {100*rate_pts:.1f}%")
 
-    # 2026-10-12：改为在本脚本内直接做 DCT 分解，不再依赖 data/ 下的 *.npy 中间场
-    # （那些 npy 由旧版 Fig11.py 写出、口径已变，已清理）。
-    # 合并后断点直接读统一的 BP_PATH（与原 `ROOT/src/Pic/Fig10_.../breakpoint.json` 同一文件）。
+
     _rb = json.loads(BP_PATH.read_text(encoding="utf-8"))
     _bps = sorted(_rb["selected_breakpoints"])[:2]
     _wl = compute_wavelength_map(*sp.shape, lat, lon)

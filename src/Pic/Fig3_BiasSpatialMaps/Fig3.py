@@ -1,27 +1,3 @@
-"""
-Fig. 3 —— 历史时期（1981–2010）HiCPC 多模式集合平均（MME）与 CN05.1 观测
-在极端降水强度（R95 Intensity）和降水变率（PrecipVar）上的偏差空间分布
-（Bias = OBS − MME）。
-
-本模块为**单文件流水线**（原 `extract_bias.py` + `Fig3.py` 合并为一个脚本）：
-  第 1 步 数据准备（原 extract_bias.py）：
-      读取兄弟模块 `../Fig2_ModelEvaluation/data/` 下的
-      `MULTI_MODEL-historical-1981-2010.nc` 与 `CN05-OBS-1981-2010.nc`，
-      取共同年份（限定 1981–2010），把各模式指标场以面积重叠权重 × cos(lat)
-      重映射到观测网格，再计算 `bias = CN05 气候态 − HiCPC MME 气候态`，
-      与两套气候态一起写入本模块 `data/` 下的 3 个 NetCDF。
-  第 2 步 绘图（原 Fig3.py）：
-      读取 `data/Bias_*.nc`，绘制 1 行 × 2 列的偏差空间分布图
-      (a) R95 Intensity、(b) PrecipVar：等值线填色叠加中国矢量边界，
-      色带以 0 为中心对称分级，蓝色表示 MME 高估（负偏差），红色表示 MME 低估（正偏差），
-      各面板左下角嵌入 PDF 直方图展示偏差值的分布特征，
-      色带上方标注面积加权区域平均偏差值，色标单位 mm/day；
-      同时把每个面板的统计量落盘为 txt 与 CSV。
-
-运行一次 `python Fig3.py` 即可完整复现 `Fig3.jpg`、`data/Bias_historical.nc`、
-`data/CN05_clim_historical.nc`、`data/MME_clim_historical.nc`、
-`data/图3_统计数据.txt`、`data/fig3_stats.csv`。
-"""
 
 from __future__ import annotations
 from pathlib import Path
@@ -55,9 +31,7 @@ OUTPUT_DIR = MODULE_DIR
 
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
 
-# ---- 数据根目录 ----------------
-# src/、Output/、Data/ 现均在论文文件夹内（与 Doc/ 同级），故直接取 REPO_ROOT/Data；
-# 若将来数据被移到别处，再恢复向上搜索的兜底逻辑。
+
 DATA_ROOT = REPO_ROOT / "Data"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 
@@ -522,11 +496,7 @@ def plot_bias_panels(
             "ticks": [float(v) for v in sel_ticks],
         })
 
-    # ---- 统计数据落盘（txt + CSV，均落在 data/）----
-    stats_path = DATA_DIR / "图3_统计数据.txt"
-    dump_bias_statistics(stats_records, stats_path)
-    print(f"  统计数据: {stats_path}")
-
+    # ---- 统计数据落盘（CSV）----
     stats_csv_path = DATA_DIR / "fig3_stats.csv"
     dump_bias_statistics_csv(stats_records, stats_csv_path)
     print(f"  统计数据(CSV): {stats_csv_path}")
@@ -537,38 +507,6 @@ def plot_bias_panels(
 
 
 # ==================== 统计数据落盘 ====================
-def dump_bias_statistics(records, out_path) -> None:
-    """把图 3 用到的偏差统计量写成纯文本（data/ 目录）。
-
-    参数:
-        records: 每个面板的 vmin / vmax / 均值 / 分级 / 色带刻度。
-        out_path: 输出 txt 路径。
-    """
-    lines = [
-        "Fig. 3 statistics - Bias (CN05 - HiCPC MME) spatial distribution",
-        "script  : src/Pic/Fig3_BiasSpatialMaps/Fig3.py",
-        "input   : data/Bias_historical.nc (produced by extract_bias.py)",
-        "period  : 1981-2010",
-        "modes   : 19",
-        "weight  : area-weighted, w = cos(lat)",
-        "",
-    ]
-    for rec in records:
-        lines.append(f"[{rec['label']}]  unit: {rec['unit']}")
-        lines.append(f"  min                  : {rec['vmin']:.4f}")
-        lines.append(f"  max                  : {rec['vmax']:.4f}")
-        lines.append(f"  mean (unweighted)    : {rec['mean_unweighted']:.4f}")
-        lines.append(f"  mean (area-weighted) : {rec['mean_area_weighted']:+.4f}   <- 正文引用的偏差")
-        lines.append(f"  obs mean (area-wtd)  : {rec['obs_mean_area_weighted']:.4f}")
-        lines.append(f"  mme mean (area-wtd)  : {rec['mme_mean_area_weighted']:.4f}   (obs - bias)")
-        lines.append(f"  rel bias vs obs      : {rec['rel_bias_pct']:+.2f} %")
-        lines.append(f"  MME-underestimated   : {rec['pct_area_underestimated']:.1f} % of area")
-        lines.append(f"  median |bias|        : {rec['median_abs_bias']:.4f}")
-        lines.append(f"  levels               : {rec['levels']}")
-        lines.append(f"  colorbar ticks       : {rec['ticks']}")
-        lines.append("")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def dump_bias_statistics_csv(records, out_path) -> None:
