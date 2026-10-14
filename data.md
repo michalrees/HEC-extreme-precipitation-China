@@ -4,7 +4,6 @@
 
 | 数据集 | 简介 | 原始数据地址 |
 | --- | --- | --- |
-| CN05.1 | 中国格点日降水观测产品，分辨率 0.25°，作为统一分析格网的参考。 | [获取地址](https://ccrc.iap.ac.cn/resource/detail?id=228) |
 | CPC Global Unified Precipitation | NOAA 发布的全球雨量站分析日降水产品，分辨率 0.5°。 | [下载目录](https://downloads.psl.noaa.gov/Datasets/cpc_global_precip/) |
 | CHM_PRE V2 | 基于中国大陆站点观测和机器学习构建的格点日降水产品，分辨率 0.1°。 | [数据 DOI](https://doi.org/10.11888/Atmos.tpdc.300523) |
 | HGCDC | 中国均一化格点气候数据集，使用其中的日降水资料，分辨率 0.1°。 | [数据 DOI](https://doi.org/10.11888/Atmos.tpdc.302712) |
