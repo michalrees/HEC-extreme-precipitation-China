@@ -1,6 +1,4 @@
-# HEC extreme precipitation China
-
-Using hierarchical emergent constraints to reduce the uncertainty in future extreme precipitation projections over China.
+# Hierarchical emergent constraints on near-future extreme precipitation intensity over China
 
 This study combines four observational precipitation products with 19 HiCPC models to constrain near-future extreme precipitation intensity over China (2021–2050) using historical precipitation variability (1981–2010). The analysis covers SSP1-2.6, SSP2-4.5, and SSP5-8.5.
 
