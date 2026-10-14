@@ -100,11 +100,11 @@ TOL = 1e-4          # 相对 float32 存档量的量化精度
 THIS_DIR = Path(__file__).resolve().parent
 STUDY_ROOT = THIS_DIR          # 脚本与 data/ 同级，模块根即脚本所在目录
 REPO_ROOT = next(
-    p for p in THIS_DIR.parents if (p / "src").is_dir() and (p / "Doc").is_dir()
+    p for p in THIS_DIR.parents if (p / "src").is_dir()
 )
 
 
-DATA_ROOT = REPO_ROOT / "Data"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
 DATA_DIR = STUDY_ROOT / "data"
 FIG_DIR = STUDY_ROOT
 CACHE_DIR = DATA_DIR / "cache"
@@ -1022,6 +1022,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         description="排除单模式/模式家族后的逐格点稳健性检查与出图（单文件管线）",
     )
+    ap.add_argument("--recompute", action="store_true", help="使用本地完整输入重新计算稳健性；默认只读 data/ 的绘图统计")
     ap.add_argument("--selftest", action="store_true",
                     help="只运行自检 T1–T6（约 15 秒），不做稳健性计算、不出图")
     ap.add_argument("--force-regrid", action="store_true",
@@ -1037,6 +1038,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.selftest:
         return run_selftest()
+
+    if not args.recompute and not args.force_regrid:
+        return make_figures()
 
     rc = run_robustness_check(force_regrid=args.force_regrid, scenarios=args.scenarios)
     if rc != 0:

@@ -30,11 +30,11 @@ plt.rcParams.update({
 
 REPO_ROOT = next(
     p for p in Path(__file__).resolve().parents
-    if (p / "src").is_dir() and (p / "Doc").is_dir()
+    if (p / "src").is_dir()
 )
-DATA_ROOT = REPO_ROOT / "Data"
-# 统一使用 pipeline 脚本 6 的规范输出（2021–2050 预估），不读 src/Pic 下的手工拷贝
-NC_PATH = REPO_ROOT / "Output" / "EC" / "China" / "HEC_ssp245_PrecipVar_to_R95mm_intensity.nc"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
+# 读取本图随仓库提供的二维绘图场。
+NC_PATH = Path(__file__).resolve().parent / "data" / "hec_ssp245.nc"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 DATA_DIR = Path(__file__).resolve().parent / "data"
 FIG_DIR = Path(__file__).resolve().parent

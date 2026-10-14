@@ -23,11 +23,11 @@ plt.rcParams["mathtext.fontset"] = "cm"
 plt.rcParams["axes.unicode_minus"] = False
 
 ROOT = Path(__file__).resolve().parent
-REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
+REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
 
 
-DATA_ROOT = REPO_ROOT / "Data"
-OBS_DIR = REPO_ROOT / "Output" / "Obs" / "indices"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
+OBS_DIR = ROOT / "data" / "observations"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 FIG_DIR = ROOT
 DATA_DIR = ROOT / "data"                     # CSV 统计落盘目录

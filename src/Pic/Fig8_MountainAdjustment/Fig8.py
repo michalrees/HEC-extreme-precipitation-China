@@ -34,10 +34,10 @@ DATA_DIR = ROOT / "data"                        # 山脉矢量与统计 CSV 的�
                                                 # （8 张单面板 JPG 不再落盘：render_panels() 写入运行期临时目录）
 OUT_JPG = ROOT / "Fig8.jpg"                     # 论文成品组图（原 compose_fig8.py 写作
                                                 # REPO_ROOT/"src"/"Pic"/"Fig8_MountainAdjustment"/"Fig8.jpg"，与 ROOT 等价）
-REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
+REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
 
 
-DATA_ROOT = REPO_ROOT / "Data"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 MTN_PATH = DATA_DIR / "CN_MountainRanges_WGS84.shp"
 
@@ -338,7 +338,7 @@ def render_panels(panel_dir: Path) -> None:
                     float(shp_bbox[1]) - 1, float(shp_bbox[3]) + 1]
 
     # ---- 全局色彩分级 ----
-    HEC_DIR = REPO_ROOT / "Output" / "EC" / "China"   # 脚本 6 的规范输出（2021-2050）
+    HEC_DIR = Path(__file__).resolve().parent / "data" / "hec"   # 脚本 6 的规范输出（2021-2050）
     all_delta = []
     for s in SCENARIOS:
         with xr.open_dataset(HEC_DIR / f"HEC_{s}_PrecipVar_to_R95mm_intensity.nc") as ds:

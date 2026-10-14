@@ -26,7 +26,7 @@ std_colors = ["#72ABC9", "#FFD0A2", "#F2A07D", "#DE7C55", "#E77B54", "#E65B50"]
 std_cmap = ListedColormap(std_colors, "std_custom")
 
 
-REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
+REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
 
 
 output_dir = Path(__file__).parent
@@ -38,7 +38,7 @@ data_dir.mkdir(parents=True, exist_ok=True)
 base_path = REPO_ROOT / "Output" / "Mode" / "indices" / "Scenariomerged"
 
 
-DATA_ROOT = REPO_ROOT / "Data"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
 shp_path = DATA_ROOT / "China" / "cnmap.shp"
 
 scenarios = ['ssp126', 'ssp245', 'ssp585']
@@ -458,7 +458,7 @@ def main(argv=None) -> None:
     )
     args = parser.parse_args(argv)
 
-    if args.reuse_npz:
+    if args.reuse_npz or npz_path.exists():
         if not npz_path.exists():
             raise FileNotFoundError(f'--reuse-npz 指定复用已有数据，但未找到: {npz_path}')
         print(f'[--reuse-npz] 跳过预处理，复用: {npz_path}')

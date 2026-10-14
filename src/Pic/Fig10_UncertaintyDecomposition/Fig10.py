@@ -33,12 +33,11 @@ plt.rcParams.update({
 
 # ── 路径（原 Fig10.py 与 尺度谱.py 的定义逐字相同，此处统一一份） ──
 REPO_ROOT = next(p for p in Path(__file__).resolve().parents
-                 if (p / "src").is_dir() and (p / "Doc").is_dir())
-DATA_ROOT = REPO_ROOT / "Data"
-NC_PATH = REPO_ROOT / "Output" / "EC" / "China" / "HEC_ssp245_PrecipVar_to_R95mm_intensity.nc"
+                 if (p / "src").is_dir())
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
+NC_PATH = Path(__file__).resolve().parent / "data" / "hec_ssp245.nc"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
-BP_PATH = (Path(__file__).resolve().parent.parent
-           / "Fig9_BiasScaleDecomposition" / "data" / "breakpoint.json")
+BP_PATH = Path(__file__).resolve().parent / "data" / "breakpoint.json"
 DATA_DIR = Path(__file__).resolve().parent / "data"
 FIG_DIR = Path(__file__).resolve().parent
 # 原 尺度谱.py 的 OUT_DIR（= FIG_DIR）已取消：备用谱图 fig10a.jpg 改为写运行期临时目录，

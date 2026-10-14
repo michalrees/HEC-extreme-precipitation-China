@@ -17,11 +17,11 @@ from matplotlib.ticker import FuncFormatter, MultipleLocator
 # 本文件即模块根目录下的 Fig7.py，模块内的 data/ 与 Fig7.jpg 均相对此处定位
 MODULE_DIR = Path(__file__).resolve().parent
 
-REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
+REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
 
 
-DATA_ROOT = REPO_ROOT / "Data"
-HEC_DIR = REPO_ROOT / "Output" / "EC" / "China"   # 脚本 6 的规范输出（2021-2050）
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
+HEC_DIR = Path(__file__).resolve().parent / "data" / "hec"   # 脚本 6 的规范输出（2021-2050）
 
 # ============================================================
 # 区域定义

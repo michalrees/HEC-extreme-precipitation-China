@@ -23,16 +23,16 @@ plt.rcParams["mathtext.fontset"] = "cm"
 plt.rcParams["axes.unicode_minus"] = False
 
 ROOT = Path(__file__).resolve().parent
-REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
+REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
 
 
-DATA_ROOT = REPO_ROOT / "Data"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 OUTPUT_DIR = ROOT
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
-HEC_DIR = REPO_ROOT / "Output" / "EC" / "China"
+HEC_DIR = Path(__file__).resolve().parent / "data" / "hec"
 
 SCENARIOS = ("ssp126", "ssp245", "ssp585")
 SCENARIO_LABELS = {"ssp126": "SSP1-2.6", "ssp245": "SSP2-4.5", "ssp585": "SSP5-8.5"}

@@ -17,10 +17,10 @@ plt.rcParams["mathtext.fontset"] = "cm"
 plt.rcParams["axes.unicode_minus"] = False
 
 ROOT = Path(__file__).resolve().parent
-REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
+REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
 
 
-DATA_ROOT = REPO_ROOT / "Data"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 OUTPUT_DIR = ROOT
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -79,7 +79,7 @@ RIVER_COLORS = {"YellowRiver": "#1f77b4", "PearlRiver": "#d62728", "YangtzeRiver
 # ============================================================
 # 上游输入（只读）：兄弟模块 Fig3 的 npz
 # ============================================================
-FIG3_DATA_DIR = ROOT.parent / "Fig3_ProjectionUncertainty" / "data"
+FIG3_DATA_DIR = ROOT / "data"
 FIG3_NPZ = FIG3_DATA_DIR / "fig3_data.npz"
 # 本模块只用 lon/lat 与各情景的 _mean/_std（同文件中的 *_var 未使用）
 FIG3_KEYS = ["lon", "lat"] + [f"{s}_{stat}" for s in SCENARIO_KEYS for stat in ("mean", "std")]

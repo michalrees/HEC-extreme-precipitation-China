@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import uuid
@@ -38,10 +39,10 @@ PANEL_KEYS = ("corr", "bias")
 # 论文成品图（散点面板）的文件名固定为 Fig2.jpg：模块根目录下不再产生
 # Fig2a.jpg / Fig2b.jpg 等中间图片；原 Fig2a.py 的 FIG2_OUT 环境变量随之移除。
 PAPER_FIG_NAME = "Fig2.jpg"
-REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir() and (p / "Doc").is_dir())
+REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src").is_dir())
 
 
-DATA_ROOT = REPO_ROOT / "Data"
+DATA_ROOT = Path(__file__).resolve().parent / "data" / "geography"
 SHP_PATH = DATA_ROOT / "China" / "cnmap.shp"
 
 EVAL_START_YEAR = 1981
@@ -949,6 +950,11 @@ def main(argv: List[str] | None = None) -> None:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
 
     # ---- 数据准备（两个面板共用，先于绘图）----
+    if not args.map_only:
+        payload = json.loads((DATA_DIR / "fig2_plot_metrics.json").read_text())
+        render_scatter_figure(payload["metric_results"], payload["mode_names"])
+        return
+
     model_sel, obs_sel, common_years, mode_names = load_evaluation_data()
 
     # ---- 先散点面板，后地图面板（保持原「先算后画、先 a 后 b」的顺序）----
