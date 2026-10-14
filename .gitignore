@@ -59,3 +59,7 @@ _tmp*
 /Output/Obs/Regridded/
 
 /UPLOAD_EXCLUSIONS.md
+
+# README documents stay local; publish only the root README.
+**/[Rr][Ee][Aa][Dd][Mm][Ee].[Mm][Dd]
+!/README.md
