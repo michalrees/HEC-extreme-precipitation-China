@@ -19,10 +19,10 @@ python "src/Pic/Fig1_ObservedProducts/Fig1.py"
 
 | 数据地址 | 用途 | 内容 |
 |---|---|---|
-| `Output/Obs/indices/CN05-OBS-IntensityAndPrecipVar-1961-2023.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图7使用 PrecipVar |
-| `Output/Obs/indices/HGCDC-OBS-IntensityAndPrecipVar-1961-2022.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图7使用 PrecipVar |
-| `Output/Obs/indices/CHM_PRE_V2-OBS-IntensityAndPrecipVar-1961-2024.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图7使用 PrecipVar |
-| `Output/Obs/indices/CPC-OBS-IntensityAndPrecipVar-1979-2025.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图7使用 PrecipVar |
+| `Output/Obs/indices/CN05-OBS-IntensityAndPrecipVar-1961-2023.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图6使用 PrecipVar |
+| `Output/Obs/indices/HGCDC-OBS-IntensityAndPrecipVar-1961-2022.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图6使用 PrecipVar |
+| `Output/Obs/indices/CHM_PRE_V2-OBS-IntensityAndPrecipVar-1961-2024.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图6使用 PrecipVar |
+| `Output/Obs/indices/CPC-OBS-IntensityAndPrecipVar-1979-2025.nc` | 观测输入 | 1981–2010逐年指标取时间平均；图1使用 PrecipVar、R95mm_intensity，图6使用 PrecipVar |
 | `Data/China/cnmap.shp` | 地理输入 | 中国边界；同名 .shx、.dbf 等配套文件需一起保留 |
 
 逐年观测先取历史期平均，再使用中国陆域掩膜。统计使用 cos(纬度) 面积权重。

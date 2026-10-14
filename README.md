@@ -6,7 +6,7 @@ Using hierarchical emergent constraints to reduce the uncertainty in future extr
 
 | 路径 | 内容 |
 |---|---|
-| `src/Pic/Fig1_ObservedProducts/` … `Fig11_UncertaintyDecomposition/` | 11 张图的绘图脚本，每个目录一份 `FigN.py` + `FigN.jpg` + `data/` + `README.md` |
+| `src/Pic/Fig1_ObservedProducts/` … `Fig10_UncertaintyDecomposition/` | 10 张图的绘图脚本，每个目录一份 `FigN.py` + `FigN.jpg` + `data/` + `README.md` |
 | `src/pipeline/` | 观测重网格、指标计算、模式合并与分层涌现约束（HEC）主流程 |
 | `src/lib/` | 公共函数库（ETCCDI 指标、降水变率等） |
 

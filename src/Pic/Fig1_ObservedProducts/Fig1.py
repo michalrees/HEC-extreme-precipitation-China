@@ -69,7 +69,7 @@ EXTENT = [float(bb[0]) - 1, float(bb[2]) + 1, float(bb[1]) - 1, float(bb[3]) + 1
 
 
 def china_mask(lon: np.ndarray, lat: np.ndarray) -> np.ndarray:
-    """中国陆域掩膜：cnmap.shp → polygonize → 向量化 Path（毫秒级），与图 8/图 9 同源。"""
+    """中国陆域掩膜：cnmap.shp → polygonize → 向量化 Path（毫秒级），与图 7/图 8 同源。"""
     lines_geo = [shapely_shape(s.__geo_interface__) for s in shapefile.Reader(str(SHP_PATH)).shapes()]
     china = unary_union(list(polygonize(unary_union(lines_geo)))).buffer(0)
     verts, codes = [], []
