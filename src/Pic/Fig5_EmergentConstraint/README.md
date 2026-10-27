@@ -1,6 +1,6 @@
-# Figure 5: Hierarchical emergent-constraint diagnostics
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Figure 5: Hierarchical emergent-constraint diagnostics
 
 ## Run
 

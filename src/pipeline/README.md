@@ -1,6 +1,6 @@
-# Precipitation indices and hierarchical emergent constraints
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Precipitation indices and hierarchical emergent constraints
 
 Use 1981–2010 `PrecipVar` to constrain 2021–2050 `R95mm_intensity`, producing HEC results for three SSP scenarios.
 

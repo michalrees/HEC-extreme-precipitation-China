@@ -1,6 +1,6 @@
-# 图 1：观测产品气候态
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 1：观测产品气候态
 
 ## 运行
 

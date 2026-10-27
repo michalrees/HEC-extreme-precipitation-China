@@ -1,6 +1,6 @@
-# Figure 2: Historical model evaluation
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Figure 2: Historical model evaluation
 
 ## Run
 

@@ -1,6 +1,6 @@
-# 图 3：未来预估与模式间不确定性
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 3：未来预估与模式间不确定性
 
 ## 运行
 

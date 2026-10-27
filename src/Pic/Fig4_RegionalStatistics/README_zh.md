@@ -1,6 +1,6 @@
-# 图 4：区域极端降水统计
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 4：区域极端降水统计
 
 ## 运行
 

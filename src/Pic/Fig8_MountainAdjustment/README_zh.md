@@ -1,6 +1,6 @@
-# 图 8：山脉分区约束调整
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 8：山脉分区约束调整
 
 ## 运行
 

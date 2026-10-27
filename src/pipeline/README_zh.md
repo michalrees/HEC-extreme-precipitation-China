@@ -1,6 +1,6 @@
-# 降水指标与分层涌现约束
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 降水指标与分层涌现约束
 
 以 1981–2010 年的 `PrecipVar` 约束 2021–2050 年的 `R95mm_intensity`，输出三个 SSP 情景的 HEC 结果。
 

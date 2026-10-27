@@ -1,6 +1,6 @@
-# Figure 10: Scale decomposition of prior and posterior uncertainty
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Figure 10: Scale decomposition of prior and posterior uncertainty
 
 ## Run
 

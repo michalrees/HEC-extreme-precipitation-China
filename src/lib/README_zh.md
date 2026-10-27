@@ -1,6 +1,6 @@
-# 公共计算模块
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 公共计算模块
 
 将本目录加入 `sys.path` 后导入所需模块。
 

@@ -1,6 +1,6 @@
-# 图 5：分层涌现约束诊断
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 5：分层涌现约束诊断
 
 ## 运行
 

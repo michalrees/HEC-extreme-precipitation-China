@@ -1,6 +1,6 @@
-# 图 6：模式集合稳健性
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 6：模式集合稳健性
 
 ## 运行
 

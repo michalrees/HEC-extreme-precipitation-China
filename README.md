@@ -1,3 +1,5 @@
+[English](README.md) | [简体中文](README_zh.md)
+
 # Scale-dependent adjustments to near-future extreme precipitation intensity over China under hierarchical emergent constraints
 
 This repository contains the Python analysis and plotting code for the study. Data and figure outputs are distributed separately through Zenodo.

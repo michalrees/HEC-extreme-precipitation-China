@@ -1,6 +1,6 @@
-# Shared computational modules
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Shared computational modules
 
 Add this directory to `sys.path`, then import the required module.
 

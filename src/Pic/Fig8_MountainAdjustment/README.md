@@ -1,6 +1,6 @@
-# Figure 8: Constraint adjustments around mountain ranges
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Figure 8: Constraint adjustments around mountain ranges
 
 ## Run
 

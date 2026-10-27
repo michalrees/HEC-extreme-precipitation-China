@@ -1,6 +1,6 @@
-# 图 9：约束调整场的谱分析与尺度分解
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 9：约束调整场的谱分析与尺度分解
 
 ## 运行
 

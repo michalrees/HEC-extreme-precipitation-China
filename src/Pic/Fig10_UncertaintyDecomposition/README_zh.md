@@ -1,6 +1,6 @@
-# 图 10：先验与后验不确定性的尺度分解
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 10：先验与后验不确定性的尺度分解
 
 ## 运行
 

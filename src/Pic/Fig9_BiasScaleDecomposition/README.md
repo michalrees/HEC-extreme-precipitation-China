@@ -1,6 +1,6 @@
-# Figure 9: Spectral analysis and scale decomposition of constraint adjustments
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Figure 9: Spectral analysis and scale decomposition of constraint adjustments
 
 ## Run
 

@@ -1,6 +1,6 @@
-# 图 7：区域约束热力图
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# 图 7：区域约束热力图
 
 ## 运行
 

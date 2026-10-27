@@ -1,6 +1,6 @@
-# Figure 6: Model-ensemble robustness
+[English](README.md) | [简体中文](README_zh.md)
 
-[English](README.md) | [中文](README_zh.md)
+# Figure 6: Model-ensemble robustness
 
 ## Run
 
