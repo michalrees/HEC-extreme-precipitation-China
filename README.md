@@ -6,7 +6,6 @@ This repository contains the Python analysis and plotting code for the study. Da
 
 ## Data
 
-- Zenodo record: [Processed data and analysis results](https://zenodo.org/records/23682272).
 - DOI: [10.5281/zenodo.23682272](https://doi.org/10.5281/zenodo.23682272).
 
 The data record includes the data-access guide, file manifest and checksums. Original precipitation inputs are obtained from the providers listed in that guide.
